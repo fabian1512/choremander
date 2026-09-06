@@ -17,6 +17,8 @@
 - [Features](#features)
 - [Dashboard Cards](#dashboard-cards)
 - [Smart Reward Pricing](#smart-reward-pricing)
+- [Services](#services)
+- [Languages](#languages)
 - [Tips](#tips)
 - [Development](#development)
 
@@ -704,6 +706,65 @@ If a child only does "Homework" 60% of the time but "Brush teeth" 100% of the ti
 ### Jackpot Rewards
 
 For big family goals (vacation, museum trip), enable **Jackpot** mode. All children's stars pool together toward one shared reward - teamwork!
+
+---
+
+## Services
+
+Choremander exposes services for automations, scripts and the Developer Tools.
+Every service is documented with its fields in the Developer Tools UI.
+
+### Managing chores and rewards
+
+| Service | Purpose |
+|---------|---------|
+| `choremander.add_chore` | Create a chore - only `name` is required; points, assignment, time category and any schedule fields fall back to their defaults |
+| `choremander.update_chore` | Change chore properties - partial update, only the fields you pass change; rename via `name` |
+| `choremander.delete_chore` | Delete a chore; completed history is kept |
+| `choremander.add_reward` | Create a reward - only `name` is required |
+| `choremander.update_reward` | Change reward properties (cost, jackpot, assignment, ...) - partial update |
+| `choremander.delete_reward` | Delete a reward; approved claims are kept as history |
+
+Schedule fields (`due_days`, `rotation`, `rotation_order`, `rotation_anchor`,
+`day_overrides`, `date_overrides`) are accepted by `add_chore` and edited
+later through the dedicated `choremander.set_chore_schedule` service, which
+leaves every field it is not given untouched.
+
+An automation can give a chore its own rotation without touching anything else:
+
+```yaml
+automation:
+  - triggers:
+      - trigger: time
+        at: "07:00:00"
+    actions:
+      - action: choremander.update_chore
+        data:
+          chore_id: "ab12cd34"
+          points: 8
+      - action: choremander.set_chore_schedule
+        data:
+          chore_id: "ab12cd34"
+          rotation: week
+          rotation_anchor: "2026-09-07"
+```
+
+### Everyday services
+
+The remaining services drive the points and approval flows:
+`complete_chore`, `approve_chore`, `reject_chore`, `claim_reward`,
+`approve_reward`, `add_points`, `remove_points`, `set_chore_order` and
+`set_chore_schedule`.
+
+---
+
+## Languages
+
+Choremander ships **English and German**. Service descriptions, the config
+dialogs and the dashboard cards follow the language of the Home Assistant
+instance. A card can also pin its own language independent of the profile
+setting with the `language` option (`de` or `en`) - useful on kiosk tablets
+whose browser reports a different language than the family speaks.
 
 ---
 

@@ -30,6 +30,19 @@ const LitElement = customElements.get("hui-masonry-view")
 const html = LitElement.prototype.html;
 const css = LitElement.prototype.css;
 
+const i18nLib = window.ChoremanderI18n;
+const i18nT = (key, vars) => (i18nLib ? i18nLib.t(key, vars) : key);
+const i18nLang = (hass, override) => {
+  if (!i18nLib) return;
+  if (override && override !== "auto") {
+    i18nLib.setLanguage(override);
+    return;
+  }
+  if (hass) {
+    i18nLib.setLanguage(hass?.locale?.language || hass?.language);
+  }
+};
+
 /**
  * Lowercase and Monday first, exactly as the integration stores a weekday, so a
  * name picked in this card can be sent straight back as a `day_overrides` key.
@@ -52,6 +65,12 @@ const ROTATIONS = [
   { value: "occurrence", label: "Take turns each time" },
   { value: "week", label: "A whole week each" },
 ];
+
+const ROTATION_I18N = {
+  none: "schedule.rotationNone",
+  occurrence: "schedule.rotationOccurrence",
+  week: "schedule.rotationWeek",
+};
 
 /**
  * A rule as this card reads it: every field present, at its default if the
@@ -556,10 +575,10 @@ class ChoremanderScheduleCard extends LitElement {
 
   setConfig(config) {
     if (!config.entity) {
-      throw new Error("Please define an entity (Choremander schedule sensor)");
+      throw new Error(i18nT("schedule.errorEntity"));
     }
     this.config = {
-      title: "Weekly Schedule",
+      title: i18nT("schedule.title"),
       // A second entity because the schedule sensor carries ids and nothing
       // else: the chore roster, and with it every chore that has no rule yet,
       // only exists on the overview sensor.
@@ -619,7 +638,7 @@ class ChoremanderScheduleCard extends LitElement {
     return {
       entity: "sensor.choremander_schedule",
       chores_entity: "sensor.choremander_overview",
-      title: "Weekly Schedule",
+      title: i18nT("schedule.title"),
     };
   }
 
@@ -668,8 +687,8 @@ class ChoremanderScheduleCard extends LitElement {
     return html`
       <ha-card>
         <div class="error config-error">
-          <div>${this.config.entity} has no ${missing.join(", ")}</div>
-          <div>This card reads ${this.constructor.getStubConfig().entity}</div>
+          <div>${i18nT("schedule.errorMissingAttributes", { entity: this.config.entity, missing: missing.join(", ") })}</div>
+          <div>${i18nT("schedule.errorReadsStub", { entity: this.constructor.getStubConfig().entity })}</div>
         </div>
       </ha-card>
     `;
@@ -897,8 +916,8 @@ class ChoremanderScheduleCard extends LitElement {
       // The grid is about to redraw from the sensor and would simply show the
       // old answer, which reads as nothing having happened. Say so instead.
       this.hass.callService("persistent_notification", "create", {
-        title: "Error Saving Schedule",
-        message: `Failed to save the schedule: ${error.message}`,
+        title: i18nT("schedule.toastFailTitle"),
+        message: i18nT("schedule.toastFailMessage", { error: error.message }),
         notification_id: "choremander_schedule_error",
       });
       return false;
@@ -913,12 +932,13 @@ class ChoremanderScheduleCard extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     const entity = this.hass.states[this.config.entity];
     if (!entity) {
       return html`
         <ha-card>
-          <div class="error">Entity not found: ${this.config.entity}</div>
+          <div class="error">${i18nT("schedule.errorEntityNotFound", { entity: this.config.entity })}</div>
         </ha-card>
       `;
     }
@@ -930,8 +950,8 @@ class ChoremanderScheduleCard extends LitElement {
       return html`
         <ha-card>
           <div class="empty-state">
-            <strong>${this.config.entity} is not available right now</strong>
-            Until it comes back, every chore is on for whoever it is assigned to.
+            <strong>${i18nT("schedule.emptyUnavailable", { entity: this.config.entity })}</strong>
+            ${i18nT("schedule.emptyUnavailableSub")}
           </div>
         </ha-card>
       `;
@@ -957,7 +977,7 @@ class ChoremanderScheduleCard extends LitElement {
           <div class="week-nav">
             <button
               class="nav prev"
-              title="Previous week"
+              title="${i18nT("schedule.navPrev")}"
               ?disabled="${week === 0}"
               @click="${() => (this._week = week - 1)}"
             >
@@ -968,7 +988,7 @@ class ChoremanderScheduleCard extends LitElement {
             >
             <button
               class="nav next"
-              title="Next week"
+              title="${i18nT("schedule.navNext")}"
               ?disabled="${week >= weeks - 1}"
               @click="${() => (this._week = week + 1)}"
             >
@@ -990,9 +1010,8 @@ class ChoremanderScheduleCard extends LitElement {
   _renderEmpty() {
     return html`
       <div class="empty-state">
-        <strong>Nothing is on a schedule yet</strong>
-        Every chore is on every day, for whoever it is assigned to. Put one on a
-        schedule below to give it days of its own.
+        <strong>${i18nT("schedule.emptyNothingScheduled")}</strong>
+        ${i18nT("schedule.emptyNothingScheduledSub")}
       </div>
     `;
   }
@@ -1009,7 +1028,7 @@ class ChoremanderScheduleCard extends LitElement {
           const isToday = this._dateKey(day) === todayKey;
           return html`
             <div class="day-head ${isToday ? "today" : ""}">
-              <span class="letter">${letter}</span>
+              <span class="letter">${i18nT("schedule.dayInitials")[index]}</span>
               <span class="date">${day.getDate()}</span>
             </div>
           `;
@@ -1039,7 +1058,7 @@ class ChoremanderScheduleCard extends LitElement {
           @click="${() => this._openCell(attributes, choreIndex, offset)}"
         >
           ${isException
-            ? html`<span class="marker" title="Set by hand rather than by the pattern">•</span>`
+            ? html`<span class="marker" title="${i18nT("schedule.markerTooltip")}">•</span>`
             : ""}
           ${roster.map(
             (childId) => html`
@@ -1056,7 +1075,7 @@ class ChoremanderScheduleCard extends LitElement {
       <button
         class="chore-name"
         data-chore-id="${choreId}"
-        title="Edit how ${this._choreName(choreId)} rotates"
+        title="${i18nT("schedule.editRotation", { name: this._choreName(choreId) })}"
         @click="${() => this._openRule(attributes, choreId)}"
       >
         <ha-icon icon="mdi:pencil"></ha-icon>
@@ -1074,15 +1093,13 @@ class ChoremanderScheduleCard extends LitElement {
     if (!roster.length) {
       return html`
         <div class="hint">
-          ${this.config.chores_entity} carries no chore list, so there is nothing
-          here to put on a schedule. This card reads that from
-          ${this.constructor.getStubConfig().chores_entity}.
+          ${i18nT("schedule.noChoreListNote", { entity: this.config.chores_entity })}
         </div>
       `;
     }
 
     if (!unscheduled.length) {
-      return html`<div class="hint">Every chore is on a schedule.</div>`;
+      return html`<div class="hint">${i18nT("schedule.hintAllScheduled")}</div>`;
     }
 
     return html`
@@ -1097,7 +1114,7 @@ class ChoremanderScheduleCard extends LitElement {
             if (choreId) this._openRule(attributes, choreId);
           }}"
         >
-          <option value="">Put a chore on the schedule...</option>
+          <option value="">${i18nT("schedule.selectPlaceholder")}</option>
           ${unscheduled.map(
             (chore) => html`<option value="${chore.id}">${chore.name}</option>`
           )}
@@ -1135,7 +1152,7 @@ class ChoremanderScheduleCard extends LitElement {
           <div class="dialog-title">${this._choreName(cell.choreId)}</div>
           <div class="dialog-subtitle">${this._longDate(cell.day)}</div>
 
-          <div class="field-label">Who is on it</div>
+          <div class="field-label">${i18nT("schedule.fieldWho")}</div>
           <div class="chips">
             ${cell.children.map(
               (childId) => html`
@@ -1151,10 +1168,9 @@ class ChoremanderScheduleCard extends LitElement {
           </div>
           ${cell.selected.length
             ? ""
-            : html`<div class="note">Nobody, which is a day off rather than a
-                deleted rule.</div>`}
+            : html`<div class="note">${i18nT("schedule.fieldNobody")}</div>`}
 
-          <div class="field-label">Change</div>
+          <div class="field-label">${i18nT("schedule.fieldChange")}</div>
           <div class="scope">
             <button
               class="scope-option ${cell.scope === "date" ? "on" : ""}"
@@ -1162,7 +1178,7 @@ class ChoremanderScheduleCard extends LitElement {
               @click="${() => (this._cell = { ...cell, scope: "date" })}"
             >
               <ha-icon icon="mdi:calendar-today"></ha-icon>
-              Just ${this._shortDate(cell.day)}
+              ${i18nT("schedule.noteJustDate", { date: this._shortDate(cell.day) })}
             </button>
             <button
               class="scope-option ${cell.scope === "day" ? "on" : ""}"
@@ -1170,14 +1186,12 @@ class ChoremanderScheduleCard extends LitElement {
               @click="${() => (this._cell = { ...cell, scope: "day" })}"
             >
               <ha-icon icon="mdi:calendar-refresh"></ha-icon>
-              Every ${weekdayLabel}
+              ${i18nT("schedule.noteEveryWeekday", { weekday: weekdayLabel })}
             </button>
           </div>
           ${cell.scope === "day" && cell.dateKey in stored.date_overrides
             ? html`<div class="note">
-                ${this._shortDate(cell.day)} already has a one-off on it, and a
-                one-off wins over the weekday - so this ${weekdayLabel} keeps
-                what it has and the rest change.
+                ${i18nT("schedule.noteDateHasOneOff", { date: this._shortDate(cell.day), weekday: weekdayLabel })}
               </div>`
             : ""}
 
@@ -1187,14 +1201,14 @@ class ChoremanderScheduleCard extends LitElement {
               ?disabled="${this._saving}"
               @click="${() => (this._cell = null)}"
             >
-              Cancel
+              ${i18nT("common.cancel")}
             </button>
             <button
               class="dialog-button save"
               ?disabled="${this._saving}"
               @click="${this._saveCell}"
             >
-              ${this._saving ? "Saving..." : "Save"}
+              ${this._saving ? i18nT("common.saving") : i18nT("common.save")}
             </button>
           </div>
         </div>
@@ -1269,9 +1283,9 @@ class ChoremanderScheduleCard extends LitElement {
       <div class="dialog-overlay rule-dialog" @click="${() => (this._rule = null)}">
         <div class="dialog-content" @click="${(event) => event.stopPropagation()}">
           <div class="dialog-title">${this._choreName(rule.choreId)}</div>
-          <div class="dialog-subtitle">Which days it falls on, and whose turn it is</div>
+          <div class="dialog-subtitle">${i18nT("schedule.dialogSubtitle")}</div>
 
-          <div class="field-label">Due days</div>
+          <div class="field-label">${i18nT("schedule.fieldDueDays")}</div>
           <div class="chips">
             ${DAY_NAMES.map(
               (name, index) => html`
@@ -1280,7 +1294,7 @@ class ChoremanderScheduleCard extends LitElement {
                   data-day="${name}"
                   @click="${() => this._toggleDueDay(name)}"
                 >
-                  ${DAY_INITIALS[index]}
+                  ${i18nT("schedule.dayInitials")[index]}
                 </button>
               `
             )}
@@ -1289,17 +1303,15 @@ class ChoremanderScheduleCard extends LitElement {
             ? ""
             : rule.rotation === "none"
               ? html`<div class="note">
-                  No days picked means every day, which takes this chore off the
-                  schedule entirely.
+                  ${i18nT("schedule.dialogNoDaysOff")}
                 </div>`
               : // Empty due days plus a rotation is still a schedule: the chore
                 // falls every day and the turns below decide whose it is.
                 html`<div class="note">
-                  No days picked means every day, with the turns below still
-                  deciding whose day it is.
+                  ${i18nT("schedule.dialogNoDaysTurns")}
                 </div>`}
 
-          <div class="field-label">Rotation</div>
+          <div class="field-label">${i18nT("schedule.fieldRotation")}</div>
           <select
             class="rotation-select"
             @change="${(event) => (this._rule = { ...rule, rotation: event.target.value })}"
@@ -1307,13 +1319,13 @@ class ChoremanderScheduleCard extends LitElement {
             ${ROTATIONS.map(
               (option) => html`
                 <option value="${option.value}" ?selected="${rule.rotation === option.value}">
-                  ${option.label}
+                  ${i18nT(ROTATION_I18N[option.value])}
                 </option>
               `
             )}
           </select>
 
-          <div class="field-label">Order of turns</div>
+          <div class="field-label">${i18nT("schedule.fieldTurnOrder")}</div>
           <div class="chips">
             ${rule.children.map((childId) => {
               const position = rule.order.indexOf(childId);
@@ -1332,19 +1344,17 @@ class ChoremanderScheduleCard extends LitElement {
             })}
           </div>
 
-          <div class="field-label">Counting from</div>
+          <div class="field-label">${i18nT("schedule.fieldCountingFrom")}</div>
           <input
             class="anchor-input"
             type="text"
-            placeholder="2026-08-03 (optional)"
+            placeholder="${i18nT("schedule.anchorPlaceholder")}"
             .value="${rule.anchor}"
             @input="${(event) => (this._rule = { ...rule, anchor: event.target.value })}"
           />
 
           <div class="note">
-            This is the chore's rule as it stands. Only what you change here is
-            sent; anything you leave alone stays exactly as it is, one-off swaps
-            included.
+            ${i18nT("schedule.ruleNote")}
           </div>
 
           <div class="dialog-actions">
@@ -1353,14 +1363,14 @@ class ChoremanderScheduleCard extends LitElement {
               ?disabled="${this._saving}"
               @click="${() => (this._rule = null)}"
             >
-              Cancel
+              ${i18nT("common.cancel")}
             </button>
             <button
               class="dialog-button save"
               ?disabled="${this._saving}"
               @click="${this._saveRule}"
             >
-              ${this._saving ? "Saving..." : "Save"}
+              ${this._saving ? i18nT("common.saving") : i18nT("common.save")}
             </button>
           </div>
         </div>
@@ -1489,55 +1499,56 @@ class ChoremanderScheduleCardEditor extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     return html`
       <div class="form-group">
-        <label>Schedule Entity</label>
+        <label>${i18nT("schedule.configScheduleEntity")}</label>
         <input
           type="text"
           .value="${this.config.entity || ""}"
           @input="${(event) => this._updateConfig("entity", event.target.value)}"
           placeholder="sensor.choremander_schedule"
         />
-        <small>The sensor carrying the resolved schedule</small>
+        <small>${i18nT("schedule.configScheduleEntityHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Chores Entity</label>
+        <label>${i18nT("schedule.configChoresEntity")}</label>
         <input
           type="text"
           .value="${this.config.chores_entity || ""}"
           @input="${(event) => this._updateConfig("chores_entity", event.target.value)}"
           placeholder="sensor.choremander_overview"
         />
-        <small>Where the chore and child names come from</small>
+        <small>${i18nT("schedule.configChoresEntityHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Card Title</label>
+        <label>${i18nT("schedule.configCardTitle")}</label>
         <input
           type="text"
           .value="${this.config.title || ""}"
           @input="${(event) => this._updateConfig("title", event.target.value)}"
-          placeholder="Weekly Schedule"
+          placeholder="${i18nT("schedule.title")}"
         />
-        <small>Optional custom title for the card</small>
+        <small>${i18nT("schedule.configCardTitleHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Density</label>
+        <label>${i18nT("common.density")}</label>
         <select @change="${(event) => this._updateConfig("density", event.target.value)}">
           <option value="default" ?selected="${(this.config.density || "default") === "default"}">
-            Default
+            ${i18nT("common.densityDefault")}
           </option>
           <option value="cozy" ?selected="${this.config.density === "cozy"}">
-            Cozy — a bit tighter
+            ${i18nT("common.densityCozy")}
           </option>
           <option value="compact" ?selected="${this.config.density === "compact"}">
-            Compact — fits a fortnight in less height
+            ${i18nT("schedule.configDensityCompact")}
           </option>
         </select>
-        <small>How much room the grid takes up</small>
+        <small>${i18nT("schedule.configDensityHelp")}</small>
       </div>
     `;
   }
@@ -1571,7 +1582,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "choremander-schedule-card",
   name: "Choremander Schedule Card",
-  description: "The week's chore rota: which days each chore falls on and whose turn it is",
+  description: i18nT("schedule.cardDescription"),
   preview: true,
 });
 

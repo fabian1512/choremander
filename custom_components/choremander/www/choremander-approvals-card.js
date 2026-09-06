@@ -10,6 +10,19 @@ const LitElement = customElements.get("hui-masonry-view")
 const html = LitElement.prototype.html;
 const css = LitElement.prototype.css;
 
+const i18nLib = window.ChoremanderI18n;
+const i18nT = (key, vars) => (i18nLib ? i18nLib.t(key, vars) : key);
+const i18nLang = (hass, override) => {
+  if (!i18nLib) return;
+  if (override && override !== "auto") {
+    i18nLib.setLanguage(override);
+    return;
+  }
+  if (hass) {
+    i18nLib.setLanguage(hass?.locale?.language || hass?.language);
+  }
+};
+
 class ChoremanderApprovalsCard extends LitElement {
   static get properties() {
     return {
@@ -276,10 +289,10 @@ class ChoremanderApprovalsCard extends LitElement {
 
   setConfig(config) {
     if (!config.entity) {
-      throw new Error("Please define an entity (pending_approvals sensor)");
+      throw new Error(i18nT("approvals.errorEntity"));
     }
     this.config = {
-      title: "Pending Approvals",
+      title: i18nT("approvals.title"),
       ...config,
     };
   }
@@ -295,7 +308,7 @@ class ChoremanderApprovalsCard extends LitElement {
   static getStubConfig() {
     return {
       entity: "sensor.pending_approvals",
-      title: "Pending Approvals",
+      title: i18nT("approvals.title"),
     };
   }
 
@@ -340,8 +353,8 @@ class ChoremanderApprovalsCard extends LitElement {
       <ha-card>
         <div class="error-state config-error">
           <ha-icon icon="mdi:alert-circle"></ha-icon>
-          <div>${this.config.entity} has no ${missing.join(", ")}</div>
-          <div>This card reads ${this.constructor.getStubConfig().entity}</div>
+          <div>${i18nT("approvals.errorMissingAttributes", { entity: this.config.entity, missing: missing.join(", ") })}</div>
+          <div>${i18nT("approvals.errorReadsStub", { entity: this.constructor.getStubConfig().entity })}</div>
         </div>
       </ha-card>
     `;
@@ -351,6 +364,7 @@ class ChoremanderApprovalsCard extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     const entity = this.hass.states[this.config.entity];
 
@@ -359,7 +373,7 @@ class ChoremanderApprovalsCard extends LitElement {
         <ha-card>
           <div class="error-state">
             <ha-icon icon="mdi:alert-circle"></ha-icon>
-            <div>Entity not found: ${this.config.entity}</div>
+            <div>${i18nT("approvals.errorEntityNotFound", { entity: this.config.entity })}</div>
           </div>
         </ha-card>
       `;
@@ -492,9 +506,9 @@ class ChoremanderApprovalsCard extends LitElement {
       dateParts.day === yesterdayParts.day;
 
     if (isToday) {
-      return "Today";
+      return i18nT("common.today");
     } else if (isYesterday) {
-      return "Yesterday";
+      return i18nT("common.yesterday");
     } else {
       return this._formatDateInTimezone(date, {
         month: "short",
@@ -516,11 +530,11 @@ class ChoremanderApprovalsCard extends LitElement {
 
   _getTimeCategoryLabel(category) {
     const labels = {
-      morning: "Morning",
-      afternoon: "Afternoon",
-      evening: "Evening",
-      night: "Night",
-      anytime: "Anytime",
+      morning: i18nT("common.morning"),
+      afternoon: i18nT("common.afternoon"),
+      evening: i18nT("common.evening"),
+      night: i18nT("common.night"),
+      anytime: i18nT("common.anytime"),
     };
     return labels[category] || category;
   }
@@ -540,8 +554,8 @@ class ChoremanderApprovalsCard extends LitElement {
     return html`
       <div class="empty-state">
         <ha-icon icon="mdi:check-circle-outline"></ha-icon>
-        <div class="message">All caught up!</div>
-        <div class="submessage">No pending approvals</div>
+        <div class="message">${i18nT("approvals.emptyTitle")}</div>
+        <div class="submessage">${i18nT("approvals.emptySub")}</div>
       </div>
     `;
   }
@@ -588,7 +602,7 @@ class ChoremanderApprovalsCard extends LitElement {
           <button
             class="action-button reject ${isLoading ? "loading" : ""}"
             @click="${() => this._handleReject(completion)}"
-            title="Reject"
+            title="${i18nT("approvals.reject")}"
             ?disabled="${isLoading}"
           >
             <ha-icon icon="mdi:close"></ha-icon>
@@ -611,7 +625,7 @@ class ChoremanderApprovalsCard extends LitElement {
           <button
             class="action-button approve ${isLoading ? "loading" : ""}"
             @click="${() => this._handleApprove(completion)}"
-            title="Approve"
+            title="${i18nT("approvals.approve")}"
             ?disabled="${isLoading}"
           >
             <ha-icon icon="mdi:check"></ha-icon>
@@ -642,8 +656,17 @@ class ChoremanderApprovalsCard extends LitElement {
       // Show error toast if available
       if (this.hass.callService) {
         this.hass.callService("persistent_notification", "create", {
-          title: "Choremander Error",
-          message: `Failed to ${service.replace("_", " ")}: ${error.message}`,
+          title: i18nT("common.error"),
+          message: i18nT("approvals.toastFail", {
+            action: i18nT(
+              service === "approve_chore"
+                ? "approvals.actionApproveChore"
+                : service === "approve_reward"
+                  ? "approvals.actionApproveReward"
+                  : "approvals.actionRejectChore"
+            ),
+            error: error.message,
+          }),
           notification_id: `choremander_error_${completionId}`,
         });
       }
@@ -703,38 +726,39 @@ class ChoremanderApprovalsCardEditor extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     return html`
       <div class="form-group">
-        <label>Entity</label>
+        <label>${i18nT("common.entity")}</label>
         <input
           type="text"
           .value="${this.config.entity || ""}"
           @input="${this._entityChanged}"
           placeholder="sensor.pending_approvals"
         />
-        <small>The pending approvals sensor entity</small>
+        <small>${i18nT("approvals.configEntityHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Title</label>
+        <label>${i18nT("common.title")}</label>
         <input
           type="text"
           .value="${this.config.title || ""}"
           @input="${this._titleChanged}"
-          placeholder="Pending Approvals"
+          placeholder="${i18nT("approvals.title")}"
         />
       </div>
 
       <div class="form-group">
-        <label>Child ID (optional)</label>
+        <label>${i18nT("approvals.configChildId")}</label>
         <input
           type="text"
           .value="${this.config.child_id || ""}"
           @input="${this._childIdChanged}"
-          placeholder="Leave empty to show all children"
+          placeholder="${i18nT("approvals.configChildIdPlaceholder")}"
         />
-        <small>Filter approvals to a specific child</small>
+        <small>${i18nT("approvals.configChildIdHelp")}</small>
       </div>
     `;
   }
@@ -780,7 +804,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "choremander-approvals-card",
   name: "Choremander Approvals",
-  description: "A card to manage pending chore approvals for Choremander",
+  description: i18nT("approvals.cardDescription"),
   preview: true,
 });
 

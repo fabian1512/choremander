@@ -32,7 +32,7 @@ from custom_components.choremander.frontend import (
     async_register_frontend,
 )
 
-MANIFEST_VERSION = "1.1.2"
+MANIFEST_VERSION = "1.1.2-de3"
 
 
 class FakeResources:
@@ -152,22 +152,21 @@ async def test_missing_www_directory_bails_out_without_marking_registered(
     )
 
 
-async def test_registration_adds_the_global_sound_module_as_an_extra_js_url(
+async def test_registration_adds_the_global_sound_modules_as_extra_js_urls(
     hass: HomeAssistant, http_ready: None
 ) -> None:
-    """The config-flow sound preview module is loaded on every page."""
+    """The sound preview and shared i18n modules are loaded on every page."""
     with (
         patch.object(hass.http, "async_register_static_paths", AsyncMock()),
         patch("custom_components.choremander.frontend.add_extra_js_url") as add_url,
     ):
         await async_register_frontend(hass)
 
-    assert GLOBAL_MODULES == ["choremander-config-sounds.js"], (
+    assert GLOBAL_MODULES == ["choremander-i18n.js", "choremander-config-sounds.js"], (
         "the set of globally-loaded modules changed; update this test deliberately"
     )
-    add_url.assert_called_once_with(
-        hass, f"{URL_BASE}/choremander-config-sounds.js?v={MANIFEST_VERSION}"
-    )
+    add_url.assert_any_call(hass, f"{URL_BASE}/choremander-i18n.js?v={MANIFEST_VERSION}")
+    add_url.assert_any_call(hass, f"{URL_BASE}/choremander-config-sounds.js?v={MANIFEST_VERSION}")
 
 
 async def test_real_setup_registers_the_static_path_and_the_global_module(
@@ -179,6 +178,10 @@ async def test_real_setup_registers_the_static_path_and_the_global_module(
     )
     assert _versioned("choremander-config-sounds.js") in hass.data[DATA_EXTRA_MODULE_URL].urls, (
         "the sound preview module should be registered with Home Assistant's "
+        "frontend extra-module URL manager"
+    )
+    assert _versioned("choremander-i18n.js") in hass.data[DATA_EXTRA_MODULE_URL].urls, (
+        "the shared i18n module should be registered with Home Assistant's "
         "frontend extra-module URL manager"
     )
 

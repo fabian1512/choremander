@@ -14,6 +14,19 @@ const LitElement = customElements.get("hui-masonry-view")
 const html = LitElement.prototype.html;
 const css = LitElement.prototype.css;
 
+const i18nLib = window.ChoremanderI18n;
+const i18nT = (key, vars) => (i18nLib ? i18nLib.t(key, vars) : key);
+const i18nLang = (hass, override) => {
+  if (!i18nLib) return;
+  if (override && override !== "auto") {
+    i18nLib.setLanguage(override);
+    return;
+  }
+  if (hass) {
+    i18nLib.setLanguage(hass?.locale?.language || hass?.language);
+  }
+};
+
 class ChoremanderReorderCard extends LitElement {
   static get properties() {
     return {
@@ -362,13 +375,13 @@ class ChoremanderReorderCard extends LitElement {
 
   setConfig(config) {
     if (!config.entity) {
-      throw new Error("Please define an entity (Choremander overview sensor)");
+      throw new Error(i18nT("reorder.errorEntity"));
     }
     if (!config.child_id) {
-      throw new Error("Please define a child_id");
+      throw new Error(i18nT("reorder.errorChildId"));
     }
     this.config = {
-      title: "Reorder Chores",
+      title: i18nT("reorder.title"),
       ...config,
     };
   }
@@ -385,7 +398,7 @@ class ChoremanderReorderCard extends LitElement {
     return {
       entity: "sensor.choremander_overview",
       child_id: "",
-      title: "Reorder Chores",
+      title: i18nT("reorder.title"),
     };
   }
 
@@ -430,8 +443,8 @@ class ChoremanderReorderCard extends LitElement {
       <ha-card>
         <div class="error-state config-error">
           <ha-icon icon="mdi:alert-circle"></ha-icon>
-          <div>${this.config.entity} has no ${missing.join(", ")}</div>
-          <div>This card reads ${this.constructor.getStubConfig().entity}</div>
+          <div>${i18nT("reorder.errorMissingAttributes", { entity: this.config.entity, missing: missing.join(", ") })}</div>
+          <div>${i18nT("reorder.errorReadsStub", { entity: this.constructor.getStubConfig().entity })}</div>
         </div>
       </ha-card>
     `;
@@ -531,11 +544,11 @@ class ChoremanderReorderCard extends LitElement {
 
   _getTimeCategoryLabel(category) {
     const labels = {
-      morning: "Morning",
-      afternoon: "Afternoon",
-      evening: "Evening",
-      night: "Night",
-      anytime: "Anytime",
+      morning: i18nT("common.morning"),
+      afternoon: i18nT("common.afternoon"),
+      evening: i18nT("common.evening"),
+      night: i18nT("common.night"),
+      anytime: i18nT("common.anytime"),
     };
     return labels[category] || category;
   }
@@ -544,6 +557,7 @@ class ChoremanderReorderCard extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     const entity = this.hass.states[this.config.entity];
 
@@ -552,7 +566,7 @@ class ChoremanderReorderCard extends LitElement {
         <ha-card>
           <div class="error-state">
             <ha-icon icon="mdi:alert-circle"></ha-icon>
-            <div>Entity not found: ${this.config.entity}</div>
+            <div>${i18nT("reorder.errorEntityNotFound", { entity: this.config.entity })}</div>
           </div>
         </ha-card>
       `;
@@ -571,7 +585,7 @@ class ChoremanderReorderCard extends LitElement {
         <ha-card>
           <div class="error-state">
             <ha-icon icon="mdi:account-alert"></ha-icon>
-            <div>Child not found: ${this.config.child_id}</div>
+            <div>${i18nT("reorder.errorChildNotFound", { child: this.config.child_id })}</div>
           </div>
         </ha-card>
       `;
@@ -591,8 +605,8 @@ class ChoremanderReorderCard extends LitElement {
           </div>
           <div class="empty-state">
             <ha-icon icon="mdi:clipboard-text-off"></ha-icon>
-            <div class="message">No chores assigned</div>
-            <div class="submessage">Add chores to this child first</div>
+            <div class="message">${i18nT("reorder.emptyTitle")}</div>
+            <div class="submessage">${i18nT("reorder.emptySub")}</div>
           </div>
         </ha-card>
       `;
@@ -614,14 +628,14 @@ class ChoremanderReorderCard extends LitElement {
             ?disabled="${this._saving || !this._hasChanges}"
           >
             <ha-icon icon="${this._saving ? "mdi:loading" : "mdi:content-save"}"></ha-icon>
-            ${this._saving ? "Saving..." : "Save Order"}
+            ${this._saving ? i18nT("common.saving") : i18nT("reorder.saveOrder")}
           </button>
         </div>
 
         ${this._hasChanges
           ? html`
               <div class="status-bar">
-                <span class="status-text unsaved">You have unsaved changes</span>
+                <span class="status-text unsaved">${i18nT("reorder.unsaved")}</span>
               </div>
             `
           : ""}
@@ -648,7 +662,7 @@ class ChoremanderReorderCard extends LitElement {
               <div class="time-category-header">
                 <ha-icon icon="${this._getTimeCategoryIcon(category)}"></ha-icon>
                 ${this._getTimeCategoryLabel(category)}
-                <span class="count">${allCategoryChores.length} chore${allCategoryChores.length !== 1 ? "s" : ""}</span>
+                <span class="count">${allCategoryChores.length === 1 ? i18nT("reorder.countOne", { count: allCategoryChores.length }) : i18nT("reorder.countMany", { count: allCategoryChores.length })}</span>
               </div>
               <div class="chores-list">
                 ${allCategoryChores.map((chore, index) =>
@@ -674,7 +688,7 @@ class ChoremanderReorderCard extends LitElement {
           <span class="chore-name">${chore.name}</span>
           <span class="chore-points">
             <ha-icon icon="${pointsIcon}"></ha-icon>
-            ${chore.points} points
+            ${i18nT("reorder.points", { points: chore.points })}
           </span>
         </div>
         <div class="reorder-buttons">
@@ -682,7 +696,7 @@ class ChoremanderReorderCard extends LitElement {
             class="reorder-button"
             @click="${() => this._moveChore(category, index, -1)}"
             ?disabled="${isFirst}"
-            title="Move up"
+            title="${i18nT("reorder.moveUp")}"
           >
             <ha-icon icon="mdi:arrow-up"></ha-icon>
           </button>
@@ -690,7 +704,7 @@ class ChoremanderReorderCard extends LitElement {
             class="reorder-button"
             @click="${() => this._moveChore(category, index, 1)}"
             ?disabled="${isLast}"
-            title="Move down"
+            title="${i18nT("reorder.moveDown")}"
           >
             <ha-icon icon="mdi:arrow-down"></ha-icon>
           </button>
@@ -748,8 +762,8 @@ class ChoremanderReorderCard extends LitElement {
       // Show success feedback
       if (this.hass.callService) {
         this.hass.callService("persistent_notification", "create", {
-          title: "Chore Order Saved",
-          message: "The chore order has been updated successfully.",
+          title: i18nT("reorder.toastSavedTitle"),
+          message: i18nT("reorder.toastSavedMessage"),
           notification_id: "choremander_reorder_success",
         });
 
@@ -764,8 +778,8 @@ class ChoremanderReorderCard extends LitElement {
       console.error("Failed to save chore order:", error);
       if (this.hass.callService) {
         this.hass.callService("persistent_notification", "create", {
-          title: "Error Saving Order",
-          message: `Failed to save chore order: ${error.message}`,
+          title: i18nT("reorder.toastFailTitle"),
+          message: i18nT("reorder.toastFailMessage", { error: error.message }),
           notification_id: "choremander_reorder_error",
         });
       }
@@ -826,6 +840,7 @@ class ChoremanderReorderCardEditor extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     // Get children from overview entity
     const overviewEntity = this.hass.states[this.config.entity];
@@ -833,20 +848,20 @@ class ChoremanderReorderCardEditor extends LitElement {
 
     return html`
       <div class="form-group">
-        <label>Overview Entity</label>
+        <label>${i18nT("reorder.configOverviewEntity")}</label>
         <input
           type="text"
           .value="${this.config.entity || ""}"
           @input="${this._entityChanged}"
           placeholder="sensor.choremander_overview"
         />
-        <small>The Choremander overview sensor entity</small>
+        <small>${i18nT("reorder.configOverviewEntityHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Child</label>
+        <label>${i18nT("reorder.configChild")}</label>
         <select @change="${this._childIdChanged}">
-          <option value="">Select a child...</option>
+          <option value="">${i18nT("reorder.configSelectChild")}</option>
           ${children.map(
             (child) => html`
               <option value="${child.id}" ?selected="${this.config.child_id === child.id}">
@@ -855,18 +870,18 @@ class ChoremanderReorderCardEditor extends LitElement {
             `
           )}
         </select>
-        <small>Which child to manage chore order for</small>
+        <small>${i18nT("reorder.configChildHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Card Title</label>
+        <label>${i18nT("reorder.configCardTitle")}</label>
         <input
           type="text"
           .value="${this.config.title || ""}"
           @input="${this._titleChanged}"
-          placeholder="Reorder Chores"
+          placeholder="${i18nT("reorder.title")}"
         />
-        <small>Optional custom title for the card</small>
+        <small>${i18nT("reorder.configCardTitleHelp")}</small>
       </div>
     `;
   }
@@ -906,7 +921,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "choremander-reorder-card",
   name: "Choremander Reorder Card",
-  description: "A card for reordering chores per child, organized by time category",
+  description: i18nT("reorder.cardDescription"),
   preview: true,
 });
 

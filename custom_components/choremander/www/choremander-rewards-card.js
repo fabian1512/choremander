@@ -15,6 +15,19 @@ const LitElement = customElements.get("hui-masonry-view")
 const html = LitElement.prototype.html;
 const css = LitElement.prototype.css;
 
+const i18nLib = window.ChoremanderI18n;
+const i18nT = (key, vars) => (i18nLib ? i18nLib.t(key, vars) : key);
+const i18nLang = (hass, override) => {
+  if (!i18nLib) return;
+  if (override && override !== "auto") {
+    i18nLib.setLanguage(override);
+    return;
+  }
+  if (hass) {
+    i18nLib.setLanguage(hass?.locale?.language || hass?.language);
+  }
+};
+
 class ChoremanderRewardsCard extends LitElement {
   /** Accepted values for the `density` option, loosest first. */
   static DENSITIES = ["default", "cozy", "compact"];
@@ -1019,10 +1032,10 @@ class ChoremanderRewardsCard extends LitElement {
 
   setConfig(config) {
     if (!config.entity) {
-      throw new Error("Please define an entity (choremander overview sensor)");
+      throw new Error(i18nT("rewards.errorEntity"));
     }
     this.config = {
-      title: "Rewards",
+      title: i18nT("rewards.title"),
       child_id: null, // Optional: filter rewards for a specific child
       show_child_badges: true, // Show which children can claim each reward
       claim_sound: "fanfare", // "none" to silence, or any fartN / fart_random
@@ -1084,7 +1097,7 @@ class ChoremanderRewardsCard extends LitElement {
   static getStubConfig() {
     return {
       entity: "sensor.choremander_overview",
-      title: "Rewards",
+      title: i18nT("rewards.title"),
       child_id: null,
       show_child_badges: true,
       claim_sound: "fanfare",
@@ -1132,8 +1145,8 @@ class ChoremanderRewardsCard extends LitElement {
       <ha-card>
         <div class="error-state config-error">
           <ha-icon icon="mdi:alert-circle"></ha-icon>
-          <div>${this.config.entity} has no ${missing.join(", ")}</div>
-          <div>This card reads ${this.constructor.getStubConfig().entity}</div>
+          <div>${i18nT("rewards.errorMissingAttributes", { entity: this.config.entity, missing: missing.join(", ") })}</div>
+          <div>${i18nT("rewards.errorReadsStub", { entity: this.constructor.getStubConfig().entity })}</div>
         </div>
       </ha-card>
     `;
@@ -1143,6 +1156,7 @@ class ChoremanderRewardsCard extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     const entity = this.hass.states[this.config.entity];
 
@@ -1151,7 +1165,7 @@ class ChoremanderRewardsCard extends LitElement {
         <ha-card>
           <div class="error-state">
             <ha-icon icon="mdi:alert-circle"></ha-icon>
-            <div>Entity not found: ${this.config.entity}</div>
+            <div>${i18nT("rewards.errorEntityNotFound", { entity: this.config.entity })}</div>
           </div>
         </ha-card>
       `;
@@ -1167,7 +1181,7 @@ class ChoremanderRewardsCard extends LitElement {
         <ha-card>
           <div class="error-state">
             <ha-icon icon="mdi:alert-circle"></ha-icon>
-            <div>Choremander is unavailable</div>
+            <div>${i18nT("rewards.errorUnavailable")}</div>
           </div>
         </ha-card>
       `;
@@ -1176,7 +1190,7 @@ class ChoremanderRewardsCard extends LitElement {
     const allRewards = entity.attributes.rewards || [];
     const children = entity.attributes.children || [];
     const pointsIcon = entity.attributes.points_icon || "mdi:star";
-    const pointsName = entity.attributes.points_name || "Stars";
+    const pointsName = entity.attributes.points_name || i18nT("common.stars");
 
     // Filter rewards based on child_id if configured
     let rewards = allRewards;
@@ -1216,7 +1230,7 @@ class ChoremanderRewardsCard extends LitElement {
             <span class="header-title">${this.config.title}</span>
           </div>
           ${rewards.length > 0
-            ? html`<span class="reward-count">${rewards.length} ${rewards.length === 1 ? "reward" : "rewards"}</span>`
+            ? html`<span class="reward-count">${rewards.length === 1 ? i18nT("rewards.countOne", { count: rewards.length }) : i18nT("rewards.countMany", { count: rewards.length })}</span>`
             : ""}
         </div>
 
@@ -1238,8 +1252,8 @@ class ChoremanderRewardsCard extends LitElement {
     return html`
       <div class="empty-state">
         <ha-icon icon="mdi:gift-off-outline"></ha-icon>
-        <div class="message">No Rewards Available</div>
-        <div class="submessage">Add rewards in Choremander settings</div>
+        <div class="message">${i18nT("rewards.emptyTitle")}</div>
+        <div class="submessage">${i18nT("rewards.emptySub")}</div>
       </div>
     `;
   }
@@ -1311,7 +1325,7 @@ class ChoremanderRewardsCard extends LitElement {
           <ha-icon icon="${pointsIcon}"></ha-icon>
           <span class="cost-value">${displayCost}</span>
           <span class="cost-label">${pointsName}</span>
-          ${isDynamicPricing ? html`<span class="dynamic-indicator" title="Goal-based reward (${reward.days_to_goal || 30} days)">&#127919;</span>` : ''}
+          ${isDynamicPricing ? html`<span class="dynamic-indicator" title="${i18nT("rewards.goalTooltip", { days: reward.days_to_goal || 30 })}">&#127919;</span>` : ''}
         </div>
         <div class="reward-details">
           ${isJackpot ? html`<div class="jackpot-label"><span>&#127920;</span> JACKPOT</div>` : ''}
@@ -1328,7 +1342,7 @@ class ChoremanderRewardsCard extends LitElement {
             ? html`
                 <div class="shortfall-label">
                   <ha-icon icon="${pointsIcon}"></ha-icon>
-                  ${claim.shortfall} more ${pointsName} needed
+                  ${i18nT("rewards.shortfall", { shortfall: claim.shortfall, points: pointsName })}
                 </div>
               `
             : ""}
@@ -1337,7 +1351,7 @@ class ChoremanderRewardsCard extends LitElement {
             ? html`
                 <div class="assigned-children">
                   ${assignedTo.length === 0
-                    ? html`<span class="child-badge all-children">All Children</span>`
+                    ? html`<span class="child-badge all-children">${i18nT("common.allChildren")}</span>`
                     : assignedTo.map(
                         (childId) =>
                           html`<span class="child-badge">${childMap[childId] || childId}</span>`
@@ -1362,13 +1376,13 @@ class ChoremanderRewardsCard extends LitElement {
     const isLoading = Boolean(this._loading[reward.id]);
     const disabled = !claim.canClaim || isLoading;
 
-    let label = `Claim ${reward.name}`;
+    let label = i18nT("rewards.claim", { name: reward.name });
     if (isLoading) {
-      label = `Claiming ${reward.name}`;
+      label = i18nT("rewards.claiming", { name: reward.name });
     } else if (!claim.canClaim) {
       label = claim.eligible.length === 0
-        ? `${reward.name} is not assigned to anyone`
-        : `Not enough points to claim ${reward.name}`;
+        ? i18nT("rewards.unassigned", { name: reward.name })
+        : i18nT("rewards.notEnough", { name: reward.name });
     }
 
     return html`
@@ -1531,7 +1545,7 @@ class ChoremanderRewardsCard extends LitElement {
   _renderConfirmDialog() {
     const entity = this.hass.states[this.config.entity];
     const pointsIcon = entity?.attributes?.points_icon || "mdi:star";
-    const pointsName = entity?.attributes?.points_name || "Stars";
+    const pointsName = entity?.attributes?.points_name || i18nT("common.stars");
 
     const { reward, choices, childId } = this._pending;
     const child = choices.find((c) => c.id === childId) || null;
@@ -1543,18 +1557,18 @@ class ChoremanderRewardsCard extends LitElement {
           class="confirm-dialog"
           role="dialog"
           aria-modal="true"
-          aria-label="Claim ${reward.name}"
+          aria-label="${i18nT("rewards.claim", { name: reward.name })}"
           @click="${(e) => e.stopPropagation()}"
         >
           <ha-icon class="dialog-icon" icon="mdi:gift-outline"></ha-icon>
-          <div class="dialog-title">Claim Reward?</div>
+          <div class="dialog-title">${i18nT("rewards.dialogClaimReward")}</div>
           <div class="dialog-body">
-            <div class="dialog-reward-name">Claim <strong>${reward.name}</strong>?</div>
+            <div class="dialog-reward-name">${i18nT("rewards.dialogClaimName", { name: reward.name })}</div>
 
             ${choices.length > 1
               ? html`
                   <div class="claimant-picker">
-                    <div class="claimant-prompt">Who is claiming it?</div>
+                    <div class="claimant-prompt">${i18nT("rewards.dialogWho")}</div>
                     ${choices.map(
                       (candidate) => html`
                         <button
@@ -1577,21 +1591,21 @@ class ChoremanderRewardsCard extends LitElement {
               ? html`
                   <div class="dialog-points-summary">
                     <div class="dialog-points-row">
-                      <span>${choices.length > 1 ? `${child.name}'s ${pointsName}` : `Your ${pointsName}`}</span>
+                      <span>${choices.length > 1 ? i18nT("rewards.dialogChildPoints", { points: pointsName, name: child.name }) : i18nT("rewards.dialogYourPoints", { points: pointsName })}</span>
                       <span class="points-val">
                         <ha-icon icon="${pointsIcon}" style="--mdc-icon-size:14px;"></ha-icon>
                         ${child.points || 0}
                       </span>
                     </div>
                     <div class="dialog-points-row cost">
-                      <span>Cost</span>
+                      <span>${i18nT("rewards.dialogCost")}</span>
                       <span class="points-val cost">
                         <ha-icon icon="${pointsIcon}" style="--mdc-icon-size:14px;"></ha-icon>
                         &minus;${cost}
                       </span>
                     </div>
                     <div class="dialog-points-row remaining">
-                      <span>Remaining</span>
+                      <span>${i18nT("rewards.dialogRemaining")}</span>
                       <span class="points-val remaining">
                         <ha-icon icon="${pointsIcon}" style="--mdc-icon-size:14px;"></ha-icon>
                         ${(child.points || 0) - cost}
@@ -1602,9 +1616,9 @@ class ChoremanderRewardsCard extends LitElement {
               : ""}
           </div>
           <div class="dialog-buttons">
-            <button class="btn-cancel" @click="${this._cancelRedeem}">Cancel</button>
+            <button class="btn-cancel" @click="${this._cancelRedeem}">${i18nT("common.cancel")}</button>
             <button class="btn-confirm" ?disabled="${!child}" @click="${this._confirmRedeem}">
-              Claim!
+              ${i18nT("rewards.dialogClaimButton")}
             </button>
           </div>
         </div>
@@ -1642,8 +1656,11 @@ class ChoremanderRewardsCard extends LitElement {
     } catch (error) {
       console.error("[Choremander] Failed to claim reward:", error);
       this.hass.callService("persistent_notification", "create", {
-        title: "Choremander Error",
-        message: `Failed to claim ${reward.name}: ${this._describeError(error)}`,
+        title: i18nT("common.error"),
+        message: i18nT("rewards.toastFail", {
+          name: reward.name,
+          error: this._describeError(error),
+        }),
         notification_id: `choremander_claim_error_${reward.id}`,
       });
     } finally {
@@ -1660,7 +1677,7 @@ class ChoremanderRewardsCard extends LitElement {
       error?.message ||
       error?.error?.message ||
       (typeof error === "string" ? error : "") ||
-      "unknown error"
+      i18nT("common.unknownError")
     );
   }
 
@@ -1758,8 +1775,8 @@ class ChoremanderRewardsCard extends LitElement {
       <div class="celebration-overlay" @click="${() => { this._celebrating = null; }}">
         <div class="celebration-content" @click="${(e) => e.stopPropagation()}">
           <div class="celebration-stars">&#127873;&#127775;&#127873;</div>
-          <div class="celebration-title">AWESOME!</div>
-          <div class="celebration-message">You claimed <strong>${claimed.name}</strong>!</div>
+          <div class="celebration-title">${i18nT("common.awesome")}</div>
+          <div class="celebration-message">${i18nT("rewards.celebrationPrefix")}<strong>${claimed.name}</strong>${i18nT("rewards.celebrationSuffix")}</div>
           <div class="celebration-points">
             <ha-icon icon="${pointsIcon}"></ha-icon>
             &minus;${claimed.cost}
@@ -1828,13 +1845,13 @@ class ChoremanderRewardsCard extends LitElement {
         </div>
         <div class="jackpot-breakdown">
           ${childContributions.map((contrib) => html`
-            <span class="jackpot-child-contribution" title="${hasWeightedData ? `Expected: ${contrib.expectedContribution}, Progress: ${Math.round(contrib.weightedProgress)}%` : ''}">
+            <span class="jackpot-child-contribution" title="${hasWeightedData ? i18nT("rewards.jackpotContribution", { expected: contrib.expectedContribution, progress: Math.round(contrib.weightedProgress) }) : ''}">
               <span class="color-dot color-${contrib.colorIndex}"></span>
               ${contrib.name}: ${hasWeightedData ? html`${Math.round(contrib.weightedProgress)}%` : html`${contrib.points} <ha-icon icon="${pointsIcon}" style="--mdc-icon-size: 12px;"></ha-icon>`}
             </span>
           `)}
           ${childContributions.length > 1 ? html`
-            <span class="jackpot-total">${totalStars}/${cost} total</span>
+            <span class="jackpot-total">${i18nT("rewards.jackpotTotal", { total: totalStars, cost })}</span>
           ` : ''}
         </div>
       </div>
@@ -1923,6 +1940,7 @@ class ChoremanderRewardsCardEditor extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     // Get children from the entity for the dropdown
     const entity = this.config.entity ? this.hass.states[this.config.entity] : null;
@@ -1930,31 +1948,31 @@ class ChoremanderRewardsCardEditor extends LitElement {
 
     return html`
       <div class="form-group">
-        <label>Entity</label>
+        <label>${i18nT("common.entity")}</label>
         <input
           type="text"
           .value="${this.config.entity || ""}"
           @input="${this._entityChanged}"
           placeholder="sensor.choremander_overview"
         />
-        <small>The Choremander overview sensor entity</small>
+        <small>${i18nT("rewards.configEntityHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Title</label>
+        <label>${i18nT("common.title")}</label>
         <input
           type="text"
           .value="${this.config.title || ""}"
           @input="${this._titleChanged}"
-          placeholder="Rewards"
+          placeholder="${i18nT("rewards.title")}"
         />
-        <small>Card title displayed in the header (default: "Rewards")</small>
+        <small>${i18nT("rewards.configTitleHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Filter by Child</label>
+        <label>${i18nT("rewards.configFilterChild")}</label>
         <select @change="${this._childIdChanged}">
-          <option value="" ?selected="${!this.config.child_id}">All Children</option>
+          <option value="" ?selected="${!this.config.child_id}">${i18nT("common.allChildren")}</option>
           ${children.map(
             (child) => html`
               <option value="${child.id}" ?selected="${this.config.child_id === child.id}">
@@ -1963,7 +1981,7 @@ class ChoremanderRewardsCardEditor extends LitElement {
             `
           )}
         </select>
-        <small>Only show rewards available to this child (leave empty for all rewards)</small>
+        <small>${i18nT("rewards.configFilterChildHelp")}</small>
       </div>
 
       <div class="form-group">
@@ -1973,27 +1991,27 @@ class ChoremanderRewardsCardEditor extends LitElement {
             ?checked="${this.config.show_child_badges !== false}"
             @change="${this._showChildBadgesChanged}"
           />
-          Show child assignment badges
+          ${i18nT("rewards.configShowBadges")}
         </label>
-        <small>Display which children can claim each reward</small>
+        <small>${i18nT("rewards.configShowBadgesHelp")}</small>
       </div>
 
-      <div class="section-heading">Layout</div>
+      <div class="section-heading">${i18nT("common.layout")}</div>
 
       <div class="form-group">
-        <label>Density</label>
+        <label>${i18nT("common.density")}</label>
         <select @change="${this._densityChanged}">
           <option value="default" ?selected="${(this.config.density || "default") === "default"}">
-            Default
+            ${i18nT("common.densityDefault")}
           </option>
           <option value="cozy" ?selected="${this.config.density === "cozy"}">
-            Cozy — a bit tighter
+            ${i18nT("common.densityCozy")}
           </option>
           <option value="compact" ?selected="${this.config.density === "compact"}">
-            Compact — fits more rewards on screen
+            ${i18nT("rewards.configDensityCompact")}
           </option>
         </select>
-        <small>How much space each reward takes up. Claim buttons stay finger-sized.</small>
+        <small>${i18nT("rewards.configDensityHelp")}</small>
       </div>
 
       <div class="form-group">
@@ -2003,9 +2021,9 @@ class ChoremanderRewardsCardEditor extends LitElement {
             ?checked="${this.config.animations !== false}"
             @change="${(e) => this._updateConfig("animations", e.target.checked)}"
           />
-          Background animations
+          ${i18nT("common.backgroundAnimations")}
         </label>
-        <small>The progress shimmer and jackpot shine. Celebrations still play.</small>
+        <small>${i18nT("rewards.configAnimationsHelp")}</small>
       </div>
     `;
   }
@@ -2061,7 +2079,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "choremander-rewards-card",
   name: "Choremander Rewards Card",
-  description: "A card displaying available rewards with star costs",
+  description: i18nT("rewards.cardDescription"),
   preview: true,
 });
 

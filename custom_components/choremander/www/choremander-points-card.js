@@ -11,6 +11,19 @@ const LitElement = customElements.get("hui-masonry-view")
 const html = LitElement.prototype.html;
 const css = LitElement.prototype.css;
 
+const i18nLib = window.ChoremanderI18n;
+const i18nT = (key, vars) => (i18nLib ? i18nLib.t(key, vars) : key);
+const i18nLang = (hass, override) => {
+  if (!i18nLib) return;
+  if (override && override !== "auto") {
+    i18nLib.setLanguage(override);
+    return;
+  }
+  if (hass) {
+    i18nLib.setLanguage(hass?.locale?.language || hass?.language);
+  }
+};
+
 class ChoremanderPointsCard extends LitElement {
   static get properties() {
     return {
@@ -510,10 +523,10 @@ class ChoremanderPointsCard extends LitElement {
 
   setConfig(config) {
     if (!config.entity) {
-      throw new Error("Please define an entity (choremander overview sensor)");
+      throw new Error(i18nT("points.errorEntity"));
     }
     this.config = {
-      title: "Manage Points",
+      title: i18nT("points.title"),
       ...config,
     };
   }
@@ -529,7 +542,7 @@ class ChoremanderPointsCard extends LitElement {
   static getStubConfig() {
     return {
       entity: "sensor.choremander_overview",
-      title: "Manage Points",
+      title: i18nT("points.title"),
     };
   }
 
@@ -574,8 +587,8 @@ class ChoremanderPointsCard extends LitElement {
       <ha-card>
         <div class="error-state config-error">
           <ha-icon icon="mdi:alert-circle"></ha-icon>
-          <div>${this.config.entity} has no ${missing.join(", ")}</div>
-          <div>This card reads ${this.constructor.getStubConfig().entity}</div>
+          <div>${i18nT("points.errorMissingAttributes", { entity: this.config.entity, missing: missing.join(", ") })}</div>
+          <div>${i18nT("points.errorReadsStub", { entity: this.constructor.getStubConfig().entity })}</div>
         </div>
       </ha-card>
     `;
@@ -585,6 +598,7 @@ class ChoremanderPointsCard extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     const entity = this.hass.states[this.config.entity];
 
@@ -593,7 +607,7 @@ class ChoremanderPointsCard extends LitElement {
         <ha-card>
           <div class="error-state">
             <ha-icon icon="mdi:alert-circle"></ha-icon>
-            <div>Entity not found: ${this.config.entity}</div>
+            <div>${i18nT("points.errorEntityNotFound", { entity: this.config.entity })}</div>
           </div>
         </ha-card>
       `;
@@ -606,7 +620,7 @@ class ChoremanderPointsCard extends LitElement {
 
     const children = entity.attributes.children || [];
     const pointsIcon = entity.attributes.points_icon || "mdi:star";
-    const pointsName = entity.attributes.points_name || "Stars";
+    const pointsName = entity.attributes.points_name || i18nT("common.stars");
 
     return html`
       <ha-card>
@@ -635,8 +649,8 @@ class ChoremanderPointsCard extends LitElement {
     return html`
       <div class="empty-state">
         <ha-icon icon="mdi:account-group"></ha-icon>
-        <div class="message">No Children Found</div>
-        <div class="submessage">Add children in Choremander settings</div>
+        <div class="message">${i18nT("points.emptyTitle")}</div>
+        <div class="submessage">${i18nT("points.emptySub")}</div>
       </div>
     `;
   }
@@ -669,7 +683,7 @@ class ChoremanderPointsCard extends LitElement {
           <button
             class="action-button remove"
             @click="${() => this._openDialog(child, "remove", pointsIcon, pointsName)}"
-            title="Remove ${pointsName}"
+            title="${i18nT("points.dialogRemove", { points: pointsName })}"
             ?disabled="${isLoading}"
           >
             <ha-icon icon="mdi:minus"></ha-icon>
@@ -677,7 +691,7 @@ class ChoremanderPointsCard extends LitElement {
           <button
             class="action-button add"
             @click="${() => this._openDialog(child, "add", pointsIcon, pointsName)}"
-            title="Add ${pointsName}"
+            title="${i18nT("points.dialogAdd", { points: pointsName })}"
             ?disabled="${isLoading}"
           >
             <ha-icon icon="mdi:plus"></ha-icon>
@@ -701,15 +715,15 @@ class ChoremanderPointsCard extends LitElement {
             </div>
             <div class="dialog-header-text">
               <div class="dialog-title">
-                ${isAdd ? "Add" : "Remove"} ${pointsName}
+                ${isAdd ? i18nT("points.dialogAdd", { points: pointsName }) : i18nT("points.dialogRemove", { points: pointsName })}
               </div>
-              <div class="dialog-subtitle">for ${child.name}</div>
+              <div class="dialog-subtitle">${i18nT("points.dialogFor", { name: child.name })}</div>
             </div>
           </div>
 
           <div class="dialog-form">
             <div class="form-group">
-              <label>Number of ${pointsName}</label>
+              <label>${i18nT("points.dialogNumberLabel", { points: pointsName })}</label>
               <input
                 type="number"
                 id="points-input"
@@ -718,14 +732,14 @@ class ChoremanderPointsCard extends LitElement {
                 value="1"
                 @keydown="${(e) => this._handleKeyDown(e, child, action)}"
               />
-              <div class="points-label">Enter 1-100</div>
+              <div class="points-label">${i18nT("points.dialogEnterRange")}</div>
             </div>
 
             <div class="form-group">
-              <label>Reason (optional)</label>
+              <label>${i18nT("points.dialogReason")}</label>
               <textarea
                 id="reason-input"
-                placeholder="e.g., Great behavior, Helped a sibling..."
+                placeholder="${i18nT("points.dialogReasonPlaceholder")}"
                 @keydown="${(e) => this._handleKeyDown(e, child, action)}"
               ></textarea>
             </div>
@@ -736,14 +750,14 @@ class ChoremanderPointsCard extends LitElement {
                 @click="${this._closeDialog}"
                 ?disabled="${isLoading}"
               >
-                Cancel
+                ${i18nT("common.cancel")}
               </button>
               <button
                 class="dialog-button confirm ${action} ${isLoading ? "loading" : ""}"
                 @click="${() => this._confirmAction(child, action)}"
                 ?disabled="${isLoading}"
               >
-                ${isLoading ? "..." : isAdd ? "Add" : "Remove"}
+                ${isLoading ? "..." : isAdd ? i18nT("points.dialogAdd", { points: pointsName }) : i18nT("points.dialogRemove", { points: pointsName })}
               </button>
             </div>
           </div>
@@ -802,7 +816,7 @@ class ChoremanderPointsCard extends LitElement {
 
     // Validate points
     if (points < 1 || points > 100) {
-      this._showNotification("Please enter a number between 1 and 100", "error");
+      this._showNotification(i18nT("points.toastRange"), "error");
       return;
     }
 
@@ -824,20 +838,22 @@ class ChoremanderPointsCard extends LitElement {
 
       // Get points name from entity
       const entity = this.hass.states[this.config.entity];
-      const pointsName = entity?.attributes?.points_name || "points";
+      const pointsName = entity?.attributes?.points_name || i18nT("common.pointsLower");
       const pointsLabel = points === 1 ? pointsName.replace(/s$/, "") : pointsName;
 
       const message =
         action === "add"
-          ? `Added ${points} ${pointsLabel} to ${child.name}`
-          : `Removed ${points} ${pointsLabel} from ${child.name}`;
+          ? i18nT("points.toastAdded", { points, pointsName: pointsLabel, name: child.name })
+          : i18nT("points.toastRemoved", { points, pointsName: pointsLabel, name: child.name });
 
       this._showNotification(message, "success");
       this._closeDialog();
     } catch (error) {
       console.error(`Failed to ${action} points:`, error);
       this._showNotification(
-        `Failed to ${action} points: ${error.message}`,
+        i18nT(action === "add" ? "points.toastFailAdd" : "points.toastFailRemove", {
+          error: error.message,
+        }),
         "error"
       );
     } finally {
@@ -912,28 +928,29 @@ class ChoremanderPointsCardEditor extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     return html`
       <div class="form-group">
-        <label>Entity</label>
+        <label>${i18nT("common.entity")}</label>
         <input
           type="text"
           .value="${this.config.entity || ""}"
           @input="${this._entityChanged}"
           placeholder="sensor.choremander_overview"
         />
-        <small>The Choremander overview sensor entity</small>
+        <small>${i18nT("points.configEntityHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Title</label>
+        <label>${i18nT("common.title")}</label>
         <input
           type="text"
           .value="${this.config.title || ""}"
           @input="${this._titleChanged}"
-          placeholder="Manage Points"
+          placeholder="${i18nT("points.title")}"
         />
-        <small>Card title displayed in the header</small>
+        <small>${i18nT("points.configTitleHelp")}</small>
       </div>
     `;
   }
@@ -972,7 +989,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "choremander-points-card",
   name: "Choremander Points Card",
-  description: "A parent-friendly card to add or remove points from children",
+  description: i18nT("points.cardDescription"),
   preview: true,
 });
 

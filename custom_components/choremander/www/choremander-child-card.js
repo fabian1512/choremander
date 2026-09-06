@@ -26,6 +26,19 @@ const LitElement = customElements.get("hui-masonry-view")
 const html = LitElement.prototype.html;
 const css = LitElement.prototype.css;
 
+const i18nLib = window.ChoremanderI18n;
+const i18nT = (key, vars) => (i18nLib ? i18nLib.t(key, vars) : key);
+const i18nLang = (hass, override) => {
+  if (!i18nLib) return;
+  if (override && override !== "auto") {
+    i18nLib.setLanguage(override);
+    return;
+  }
+  if (hass) {
+    i18nLib.setLanguage(hass?.locale?.language || hass?.language);
+  }
+};
+
 class ChoremanderChildCard extends LitElement {
   /** Accepted values for the `density` option, loosest first. */
   static DENSITIES = ["default", "cozy", "compact"];
@@ -1339,10 +1352,10 @@ class ChoremanderChildCard extends LitElement {
 
   setConfig(config) {
     if (!config.entity) {
-      throw new Error("Please define an entity (choremander overview sensor)");
+      throw new Error(i18nT("child.errorEntity"));
     }
     if (!config.child_id) {
-      throw new Error("Please define a child_id");
+      throw new Error(i18nT("child.errorChildId"));
     }
     this.config = {
       time_category: "anytime",
@@ -1480,8 +1493,8 @@ class ChoremanderChildCard extends LitElement {
       <ha-card>
         <div class="error-state config-error">
           <ha-icon icon="mdi:alert-circle"></ha-icon>
-          <div>${this.config.entity} has no ${missing.join(", ")}</div>
-          <div>This card reads ${this.constructor.getStubConfig().entity}</div>
+          <div>${i18nT("child.errorMissingAttributes", { entity: this.config.entity, missing: missing.join(", ") })}</div>
+          <div>${i18nT("child.errorReadsStub", { entity: this.constructor.getStubConfig().entity })}</div>
         </div>
       </ha-card>
     `;
@@ -1491,6 +1504,7 @@ class ChoremanderChildCard extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     const entity = this.hass.states[this.config.entity];
 
@@ -1499,7 +1513,7 @@ class ChoremanderChildCard extends LitElement {
         <ha-card>
           <div class="error-state">
             <ha-icon icon="mdi:alert-circle"></ha-icon>
-            <div>Entity not found: ${this.config.entity}</div>
+            <div>${i18nT("child.errorEntityNotFound", { entity: this.config.entity })}</div>
           </div>
         </ha-card>
       `;
@@ -1519,7 +1533,7 @@ class ChoremanderChildCard extends LitElement {
         <ha-card>
           <div class="error-state">
             <ha-icon icon="mdi:account-alert"></ha-icon>
-            <div>Child not found: ${this.config.child_id}</div>
+            <div>${i18nT("child.errorChildNotFound", { child: this.config.child_id })}</div>
           </div>
         </ha-card>
       `;
@@ -1599,7 +1613,7 @@ class ChoremanderChildCard extends LitElement {
     };
 
     const pointsIcon = entity.attributes.points_icon || "mdi:star";
-    const pointsName = entity.attributes.points_name || "Stars";
+    const pointsName = entity.attributes.points_name || i18nT("common.stars");
 
     // Get child entity for avatar
     const childEntityId = Object.keys(this.hass.states).find(
@@ -1644,7 +1658,7 @@ class ChoremanderChildCard extends LitElement {
                   <ha-icon icon="${pointsIcon}"></ha-icon>
                   ${child.points}
                 </div>
-                <div class="stars-label my-stars">My ${pointsName}</div>
+                <div class="stars-label my-stars">${i18nT("child.myStars", { points: pointsName })}</div>
               </div>
               ${pendingPoints > 0 ? html`
                 <div class="stars-divider"></div>
@@ -1653,7 +1667,7 @@ class ChoremanderChildCard extends LitElement {
                     <ha-icon icon="mdi:timer-sand"></ha-icon>
                     +${pendingPoints}
                   </div>
-                  <div class="stars-label waiting-stars">Waiting</div>
+                  <div class="stars-label waiting-stars">${i18nT("child.waiting")}</div>
                 </div>
               ` : ''}
             </div>
@@ -1678,16 +1692,16 @@ class ChoremanderChildCard extends LitElement {
         ${this.config.debug === true ? html`
           <!-- DEBUG PANEL -->
           <div style="margin-top: 20px; padding: 10px; background: #333; color: #0f0; font-family: monospace; font-size: 11px; border-radius: 8px;">
-            <div><strong>DEBUG INFO:</strong></div>
-            <div>Config child_id: "${this.config.child_id}"</div>
-            <div>Found child.id: "${this._debugInfo?.foundChildId}"</div>
-            <div>Found child.name: "${this._debugInfo?.foundChildName}"</div>
-            <div>Total chores: ${this._debugInfo?.totalChores}</div>
-            <div>Filtered chores: ${this._debugInfo?.filteredCount}</div>
-            <div>Held back by the schedule: ${this._debugInfo?.unscheduledCount}</div>
-            <div style="margin-top: 5px;"><strong>Sample chores assigned_to:</strong></div>
+            <div><strong>${i18nT("child.debugTitle")}</strong></div>
+            <div>${i18nT("child.debugConfigChild", { value: this.config.child_id })}</div>
+            <div>${i18nT("child.debugFoundChildId", { value: this._debugInfo?.foundChildId })}</div>
+            <div>${i18nT("child.debugFoundChildName", { value: this._debugInfo?.foundChildName })}</div>
+            <div>${i18nT("child.debugTotalChores", { value: this._debugInfo?.totalChores })}</div>
+            <div>${i18nT("child.debugFilteredChores", { value: this._debugInfo?.filteredCount })}</div>
+            <div>${i18nT("child.debugHeldBack", { value: this._debugInfo?.unscheduledCount })}</div>
+            <div style="margin-top: 5px;"><strong>${i18nT("child.debugSample")}</strong></div>
             ${(this._debugInfo?.sampleChores || []).map(c => html`
-              <div>- ${c.name}: ${JSON.stringify(c.assigned_to)} (isArray: ${c.isArray})</div>
+              <div>${i18nT("child.debugEntry", { name: c.name, assigned: JSON.stringify(c.assigned_to), isArray: c.isArray })}</div>
             `)}
           </div>
         ` : ""}
@@ -1879,11 +1893,11 @@ class ChoremanderChildCard extends LitElement {
       if (!onThatDay) continue;
 
       const away = offset - dayIndex;
-      if (away === 1) return "tomorrow";
-      if (away >= 7) return `in ${away} days`;
+      if (away === 1) return i18nT("common.tomorrow");
+      if (away >= 7) return i18nT("child.inDays", { days: away });
 
       const start = this._parseWindowStart(windowStart);
-      if (!start) return `in ${away} days`;
+      if (!start) return i18nT("child.inDays", { days: away });
       start.setDate(start.getDate() + offset);
       return start.toLocaleDateString(undefined, { weekday: "long" });
     }
@@ -1952,12 +1966,12 @@ class ChoremanderChildCard extends LitElement {
 
   _getTimeCategoryLabel(category) {
     const labels = {
-      morning: "Morning",
-      afternoon: "Afternoon",
-      evening: "Evening",
-      night: "Night",
-      anytime: "Anytime",
-      all: "All",
+      morning: i18nT("common.morning"),
+      afternoon: i18nT("common.afternoon"),
+      evening: i18nT("common.evening"),
+      night: i18nT("common.night"),
+      anytime: i18nT("common.anytime"),
+      all: i18nT("common.all"),
     };
     return labels[category] || category;
   }
@@ -1965,14 +1979,14 @@ class ChoremanderChildCard extends LitElement {
   _getDynamicTitle() {
     const category = this.config.time_category;
     const titles = {
-      morning: "Morning Chores",
-      afternoon: "Afternoon Chores",
-      evening: "Evening Chores",
-      night: "Night Chores",
-      anytime: "Today's Chores",
-      all: "Today's Chores",
+      morning: i18nT("child.sectionTitle.morning"),
+      afternoon: i18nT("child.sectionTitle.afternoon"),
+      evening: i18nT("child.sectionTitle.evening"),
+      night: i18nT("child.sectionTitle.night"),
+      anytime: i18nT("child.sectionTitle.anytime"),
+      all: i18nT("child.sectionTitle.all"),
     };
-    return titles[category] || "Today's Chores";
+    return titles[category] || i18nT("child.sectionTitle.anytime");
   }
 
   _getTimezone() {
@@ -2036,8 +2050,8 @@ class ChoremanderChildCard extends LitElement {
       return html`
         <div class="empty-state">
           <ha-icon icon="mdi:sleep"></ha-icon>
-          <div class="message">Day off 🎉</div>
-          <div class="submessage">Nothing scheduled today.${nextDay ? ` Next chores ${nextDay}!` : ""}</div>
+          <div class="message">${i18nT("child.emptyDayOff")}</div>
+          <div class="submessage">${i18nT("child.emptyNothingScheduled")}${nextDay ? " " + i18nT("child.emptyNextChores", { when: nextDay }) : ""}</div>
         </div>
       `;
     }
@@ -2046,10 +2060,9 @@ class ChoremanderChildCard extends LitElement {
       return html`
         <div class="empty-state">
           <ha-icon icon="mdi:clock-outline"></ha-icon>
-          <div class="message">Nothing here</div>
+          <div class="message">${i18nT("child.emptyNothingHere")}</div>
           <div class="submessage">
-            No ${String(this._getTimeCategoryLabel(this.config.time_category) || "").toLowerCase()}
-            chores today - you are on something at another time.
+            ${i18nT("child.emptyNoChores", { category: this._getTimeCategoryLabel(this.config.time_category) || "" })}
           </div>
         </div>
       `;
@@ -2058,8 +2071,8 @@ class ChoremanderChildCard extends LitElement {
     return html`
       <div class="empty-state">
         <ha-icon icon="mdi:party-popper"></ha-icon>
-        <div class="message">All Done!</div>
-        <div class="submessage">No chores right now. Great job!</div>
+        <div class="message">${i18nT("child.emptyAllDone")}</div>
+        <div class="submessage">${i18nT("child.emptyNoChoresNow")}</div>
       </div>
     `;
   }
@@ -2141,7 +2154,7 @@ class ChoremanderChildCard extends LitElement {
       <div
         class="chore-card ${isLoading ? "loading" : ""} ${isCelebrating ? "celebrating" : ""} ${isCompletedForToday ? "completed" : ""}"
         @click="${handleRowClick}"
-        title="${isCompletedForToday ? 'Click to undo' : 'Click to complete'}"
+        title="${isCompletedForToday ? i18nT("child.clickUndo") : i18nT("child.clickComplete")}"
       >
         <div class="chore-info">
           <div class="chore-number-wrapper">
@@ -2177,8 +2190,8 @@ class ChoremanderChildCard extends LitElement {
       <div class="celebration-overlay" @click="${this._closeCelebration}">
         <div class="celebration-content" @click="${(e) => e.stopPropagation()}">
           <div class="celebration-stars">&#127775;&#127775;&#127775;</div>
-          <div class="celebration-title">AWESOME!</div>
-          <div class="celebration-message">You did it! Keep up the great work!</div>
+          <div class="celebration-title">${i18nT("common.awesome")}</div>
+          <div class="celebration-message">${i18nT("child.celebrationMessage")}</div>
           <div class="celebration-points">
             <ha-icon icon="${pointsIcon}"></ha-icon>
             +${points}
@@ -2316,8 +2329,8 @@ class ChoremanderChildCard extends LitElement {
       // Show error notification
       if (this.hass.callService) {
         this.hass.callService("persistent_notification", "create", {
-          title: "Oops!",
-          message: `Something went wrong: ${error.message}`,
+          title: i18nT("common.oops"),
+          message: i18nT("child.toastWrong", { error: error.message }),
           notification_id: `choremander_error_${chore.id}`,
         });
       }
@@ -2379,8 +2392,8 @@ class ChoremanderChildCard extends LitElement {
       // Show error notification
       if (this.hass.callService) {
         this.hass.callService("persistent_notification", "create", {
-          title: "Oops!",
-          message: `Couldn't undo: ${error.message}`,
+          title: i18nT("common.oops"),
+          message: i18nT("child.toastUndoFail", { error: error.message }),
           notification_id: `choremander_undo_error_${chore.id}`,
         });
       }
@@ -2476,6 +2489,7 @@ class ChoremanderChildCardEditor extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     // Get children from overview entity
     const overviewEntity = this.hass.states[this.config.entity];
@@ -2483,20 +2497,20 @@ class ChoremanderChildCardEditor extends LitElement {
 
     return html`
       <div class="form-group">
-        <label>Overview Entity</label>
+        <label>${i18nT("child.configOverviewEntity")}</label>
         <input
           type="text"
           .value="${this.config.entity || ""}"
           @input="${this._entityChanged}"
           placeholder="sensor.choremander_overview"
         />
-        <small>The Choremander overview sensor entity</small>
+        <small>${i18nT("child.configOverviewEntityHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Child</label>
+        <label>${i18nT("child.configChild")}</label>
         <select @change="${this._childIdChanged}">
-          <option value="">Select a child...</option>
+          <option value="">${i18nT("child.configSelectChild")}</option>
           ${children.map(
             (child) => html`
               <option value="${child.id}" ?selected="${this.config.child_id === child.id}">
@@ -2505,72 +2519,72 @@ class ChoremanderChildCardEditor extends LitElement {
             `
           )}
         </select>
-        <small>Which child is this card for?</small>
+        <small>${i18nT("child.configChildHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Time Category</label>
+        <label>${i18nT("child.configTimeCategory")}</label>
         <select @change="${this._timeCategoryChanged}">
           <option value="morning" ?selected="${this.config.time_category === "morning"}">
-            Morning Chores
+            ${i18nT("child.configOptionMorning")}
           </option>
           <option value="afternoon" ?selected="${this.config.time_category === "afternoon"}">
-            Afternoon Chores
+            ${i18nT("child.configOptionAfternoon")}
           </option>
           <option value="evening" ?selected="${this.config.time_category === "evening"}">
-            Evening Chores
+            ${i18nT("child.configOptionEvening")}
           </option>
           <option value="night" ?selected="${this.config.time_category === "night"}">
-            Night Chores
+            ${i18nT("child.configOptionNight")}
           </option>
           <option value="anytime" ?selected="${this.config.time_category === "anytime"}">
-            Today's Chores (Anytime)
+            ${i18nT("child.configOptionAnytime")}
           </option>
           <option value="all" ?selected="${this.config.time_category === "all"}">
-            Today's Chores (All)
+            ${i18nT("child.configOptionAll")}
           </option>
         </select>
-        <small>Which time of day to show chores for (also sets the card title)</small>
+        <small>${i18nT("child.configTimeCategoryHelp")}</small>
       </div>
 
-      <div class="section-heading">Layout</div>
+      <div class="section-heading">${i18nT("common.layout")}</div>
 
       <div class="form-group">
-        <label>Density</label>
+        <label>${i18nT("common.density")}</label>
         <select @change="${this._densityChanged}">
           <option value="default" ?selected="${(this.config.density || "default") === "default"}">
-            Default — big and bold
+            ${i18nT("child.configDensityDefault")}
           </option>
           <option value="cozy" ?selected="${this.config.density === "cozy"}">
-            Cozy — a bit tighter
+            ${i18nT("common.densityCozy")}
           </option>
           <option value="compact" ?selected="${this.config.density === "compact"}">
-            Compact — fits about twice as many chores on screen
+            ${i18nT("child.configDensityCompact")}
           </option>
         </select>
-        <small>How much space each chore takes up. Taps stay finger-sized at every setting.</small>
+        <small>${i18nT("child.configDensityHelp")}</small>
       </div>
 
       ${this._renderToggle(
         "show_header",
-        "Show header",
-        "The avatar, name and star balance across the top"
+        i18nT("child.configShowHeader"),
+        i18nT("child.configShowHeaderHelp")
       )}
-      ${this._renderToggle("show_avatar", "Show avatar", "The round picture next to the name")}
-      ${this._renderToggle("show_title", "Show section heading", 'The "Morning Chores" line')}
-      ${this._renderToggle("show_numbers", "Show chore numbers", "The coloured number badges")}
+      ${this._renderToggle("show_avatar", i18nT("common.showAvatar"), i18nT("child.configShowAvatarHelp"))}
+      ${this._renderToggle("show_title", i18nT("child.configShowTitle"), i18nT("child.configShowTitleHelp"))}
+      ${this._renderToggle("show_numbers", i18nT("child.configShowNumbers"), i18nT("child.configShowNumbersHelp"))}
       ${this._renderToggle(
         "show_chore_points",
-        "Show points per chore",
-        "The star value under each chore name"
+        i18nT("child.configShowPoints"),
+        i18nT("child.configShowPointsHelp")
       )}
       ${this._renderToggle(
         "animations",
-        "Background animations",
-        "The floating avatar and spinning stars. Celebrations still play."
+        i18nT("common.backgroundAnimations"),
+        i18nT("child.configAnimationsHelp")
       )}
 
-      <div class="section-heading">Advanced</div>
+      <div class="section-heading">${i18nT("child.configAdvanced")}</div>
 
       <div class="form-group">
         <label>
@@ -2580,9 +2594,9 @@ class ChoremanderChildCardEditor extends LitElement {
             @change="${this._debugChanged}"
             style="margin-right: 8px;"
           />
-          Show Debug Panel
+          ${i18nT("child.configShowDebug")}
         </label>
-        <small>Display debug information at the bottom of the card</small>
+        <small>${i18nT("child.configShowDebugHelp")}</small>
       </div>
     `;
   }
@@ -2663,7 +2677,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "choremander-child-card",
   name: "Choremander Child Card",
-  description: "A fun, kid-friendly card for children to complete their chores!",
+  description: i18nT("child.cardDescription"),
   preview: true,
 });
 

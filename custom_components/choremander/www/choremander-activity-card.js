@@ -18,6 +18,19 @@ const LitElement = customElements.get("hui-masonry-view")
 const html = LitElement.prototype.html;
 const css = LitElement.prototype.css;
 
+const i18nLib = window.ChoremanderI18n;
+const i18nT = (key, vars) => (i18nLib ? i18nLib.t(key, vars) : key);
+const i18nLang = (hass, override) => {
+  if (!i18nLib) return;
+  if (override && override !== "auto") {
+    i18nLib.setLanguage(override);
+    return;
+  }
+  if (hass) {
+    i18nLib.setLanguage(hass?.locale?.language || hass?.language);
+  }
+};
+
 /**
  * How each stored event type is presented.
  *
@@ -49,6 +62,13 @@ const FILTERS = [
   { id: "rewards", label: "Rewards" },
   { id: "adjustments", label: "Bonuses" },
 ];
+
+const FILTER_I18N = {
+  all: "activity.filterAll",
+  chores: "activity.filterChores",
+  rewards: "activity.filterRewards",
+  adjustments: "activity.filterAdjustments",
+};
 
 class ChoremanderActivityCard extends LitElement {
   /** Accepted values for the `density` option, loosest first. */
@@ -395,10 +415,10 @@ class ChoremanderActivityCard extends LitElement {
 
   setConfig(config) {
     if (!config.entity) {
-      throw new Error("Please define an entity (choremander activity sensor)");
+      throw new Error(i18nT("activity.errorEntity"));
     }
     this.config = {
-      title: "Activity",
+      title: i18nT("activity.title"),
       child_id: null, // Optional: show only one child's activity
       max_items: 20,
       show_filters: true,
@@ -473,7 +493,7 @@ class ChoremanderActivityCard extends LitElement {
   static getStubConfig() {
     return {
       entity: "sensor.choremander_activity",
-      title: "Activity",
+      title: i18nT("activity.title"),
       child_id: null,
       max_items: 20,
     };
@@ -519,8 +539,8 @@ class ChoremanderActivityCard extends LitElement {
     return html`
       <ha-card>
         <div class="error config-error">
-          <div>${this.config.entity} has no ${missing.join(", ")}</div>
-          <div>This card reads ${this.constructor.getStubConfig().entity}</div>
+          <div>${i18nT("activity.errorMissingAttributes", { entity: this.config.entity, missing: missing.join(", ") })}</div>
+          <div>${i18nT("activity.errorReadsStub", { entity: this.constructor.getStubConfig().entity })}</div>
         </div>
       </ha-card>
     `;
@@ -558,11 +578,11 @@ class ChoremanderActivityCard extends LitElement {
   _formatRelative(date) {
     const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
     if (seconds < 0) return null;
-    if (seconds < 60) return "just now";
+    if (seconds < 60) return i18nT("common.justNow");
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
+    if (minutes < 60) return i18nT("activity.minutesAgo", { n: minutes });
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
+    if (hours < 24) return i18nT("activity.hoursAgo", { n: hours });
     return null;
   }
 
@@ -584,33 +604,33 @@ class ChoremanderActivityCard extends LitElement {
    * fields. Nothing here parses stored text.
    */
   _describe(event) {
-    const who = html`<span class="who">${event.child_name || "Someone"}</span>`;
+    const who = html`<span class="who">${event.child_name || i18nT("common.someone")}</span>`;
     const chore = event.chore_name
       ? html`<span class="what">${event.chore_name}</span>`
-      : html`<span class="what">a chore</span>`;
+      : html`<span class="what">${i18nT("activity.aChore")}</span>`;
     const reward = event.reward_name
       ? html`<span class="what">${event.reward_name}</span>`
-      : html`<span class="what">a reward</span>`;
+      : html`<span class="what">${i18nT("activity.aReward")}</span>`;
 
     switch (event.event_type) {
       case "chore_approved":
-        return html`${who} completed ${chore}`;
+        return html`${who}${i18nT("activity.completedPrefix")}${chore}${i18nT("activity.completedSuffix")}`;
       case "chore_pending":
-        return html`${who} completed ${chore}`;
+        return html`${who}${i18nT("activity.completedPrefix")}${chore}${i18nT("activity.completedSuffix")}`;
       case "chore_rejected":
-        return html`${chore} was sent back to ${who}`;
+        return html`${chore}${i18nT("activity.sentBackPrefix")}${who}${i18nT("activity.sentBackSuffix")}`;
       case "reward_claimed":
-        return html`${who} claimed ${reward}`;
+        return html`${who}${i18nT("activity.claimedPrefix")}${reward}${i18nT("activity.claimedSuffix")}`;
       case "reward_refunded":
-        return html`${reward} was returned to ${who}`;
+        return html`${reward}${i18nT("activity.returnedPrefix")}${who}${i18nT("activity.returnedSuffix")}`;
       case "points_added":
-        return html`${who} got a bonus`;
+        return html`${who}${i18nT("activity.bonusSuffix")}`;
       // Deliberately not "lost some ${points_name}": a family that renames the
       // currency ends up with sentences like "lost some Bucks". The amount is
       // already on the row, so the sentence only has to say what kind of event
       // it was.
       case "points_removed":
-        return html`${who} had a penalty`;
+        return html`${who}${i18nT("activity.penaltySuffix")}`;
       default:
         return html`${who} - ${event.event_type}`;
     }
@@ -618,7 +638,7 @@ class ChoremanderActivityCard extends LitElement {
 
   get _pointsName() {
     const entity = this.hass?.states?.[this.config?.entity];
-    return entity?.attributes?.points_name || "Stars";
+    return entity?.attributes?.points_name || i18nT("common.stars");
   }
 
   get _pointsIcon() {
@@ -669,8 +689,8 @@ class ChoremanderActivityCard extends LitElement {
 
       const key = this._dayKey(date);
       let label;
-      if (key === today) label = "Today";
-      else if (key === yesterday) label = "Yesterday";
+      if (key === today) label = i18nT("common.today");
+      else if (key === yesterday) label = i18nT("common.yesterday");
       else {
         label = date.toLocaleDateString(undefined, {
           timeZone: this._timeZone,
@@ -692,12 +712,13 @@ class ChoremanderActivityCard extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     const entity = this.hass.states[this.config.entity];
     if (!entity) {
       return html`
         <ha-card>
-          <div class="error">Entity not found: ${this.config.entity}</div>
+          <div class="error">${i18nT("activity.errorEntityNotFound", { entity: this.config.entity })}</div>
         </ha-card>
       `;
     }
@@ -727,7 +748,7 @@ class ChoremanderActivityCard extends LitElement {
           </div>
           ${shown
             ? html`<div class="header-count">
-                ${shown} ${shown === 1 ? "event" : "events"}
+                ${shown === 1 ? i18nT("activity.eventCountOne", { count: shown }) : i18nT("activity.eventCountMany", { count: shown })}
               </div>`
             : ""}
         </div>
@@ -761,7 +782,7 @@ class ChoremanderActivityCard extends LitElement {
                 this._filter = filter.id;
               }}"
             >
-              ${filter.label}
+              ${i18nT(FILTER_I18N[filter.id])}
             </button>
           `
         )}
@@ -791,7 +812,7 @@ class ChoremanderActivityCard extends LitElement {
           <div class="event-meta">
             <span>${relative || this._formatTime(event._date)}</span>
             ${event.event_type === "chore_pending"
-              ? html`<span class="tag">waiting for approval</span>`
+              ? html`<span class="tag">${i18nT("activity.waitingTag")}</span>`
               : ""}
             ${event.reason ? html`<span class="event-reason">${event.reason}</span>` : ""}
           </div>
@@ -806,7 +827,7 @@ class ChoremanderActivityCard extends LitElement {
     // stake rather than a change that has not happened.
     if (event.event_type === "chore_pending") {
       if (!event.pending_points) return "";
-      const worth = `Worth ${event.pending_points} ${this._pointsName} once approved`;
+      const worth = i18nT("activity.worth", { points: event.pending_points, pointsName: this._pointsName });
       return html`
         <div class="points at-stake" title="${worth}" aria-label="${worth}">
           <ha-icon icon="${this._pointsIcon}"></ha-icon>${event.pending_points}
@@ -838,8 +859,8 @@ class ChoremanderActivityCard extends LitElement {
         <ha-icon icon="mdi:timeline-text-outline"></ha-icon>
         <div class="empty-text">
           ${hasEventsBehindTheFilter
-            ? "Nothing here yet - try a different filter."
-            : "Nothing has happened yet. Get a chore done!"}
+            ? i18nT("activity.emptyFiltered")
+            : i18nT("activity.emptyNone")}
         </div>
       </div>
     `;
@@ -920,37 +941,38 @@ class ChoremanderActivityCardEditor extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     const entity = this.config.entity ? this.hass.states[this.config.entity] : null;
     const children = entity?.attributes?.children || [];
 
     return html`
       <div class="form-group">
-        <label>Entity</label>
+        <label>${i18nT("common.entity")}</label>
         <input
           type="text"
           .value="${this.config.entity || ""}"
           @input="${(e) => this._updateConfig("entity", e.target.value)}"
           placeholder="sensor.choremander_activity"
         />
-        <small>The Choremander activity sensor entity</small>
+        <small>${i18nT("activity.configEntityHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Title</label>
+        <label>${i18nT("common.title")}</label>
         <input
           type="text"
           .value="${this.config.title || ""}"
           @input="${(e) => this._updateConfig("title", e.target.value)}"
-          placeholder="Activity"
+          placeholder="${i18nT("activity.title")}"
         />
-        <small>Card title displayed in the header (default: "Activity")</small>
+        <small>${i18nT("activity.configTitleHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Filter by Child</label>
+        <label>${i18nT("activity.configFilterChild")}</label>
         <select @change="${(e) => this._updateConfig("child_id", e.target.value || null)}">
-          <option value="" ?selected="${!this.config.child_id}">Everyone</option>
+          <option value="" ?selected="${!this.config.child_id}">${i18nT("common.everyone")}</option>
           ${children.map(
             (child) => html`
               <option value="${child.id}" ?selected="${this.config.child_id === child.id}">
@@ -959,11 +981,11 @@ class ChoremanderActivityCardEditor extends LitElement {
             `
           )}
         </select>
-        <small>Show only this child's activity (leave empty for the whole family)</small>
+        <small>${i18nT("activity.configFilterChildHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Events to show</label>
+        <label>${i18nT("activity.configEventsToShow")}</label>
         <input
           type="number"
           min="1"
@@ -971,7 +993,7 @@ class ChoremanderActivityCardEditor extends LitElement {
           .value="${this.config.max_items ?? 20}"
           @input="${(e) => this._numberChanged("max_items", e.target.value, 1, MAX_FEED_ITEMS, 20)}"
         />
-        <small>The integration keeps the most recent ${MAX_FEED_ITEMS} events</small>
+        <small>${i18nT("activity.configEventsHelp", { max: MAX_FEED_ITEMS })}</small>
       </div>
 
       <div class="form-group">
@@ -981,9 +1003,9 @@ class ChoremanderActivityCardEditor extends LitElement {
             ?checked="${this.config.show_filters !== false}"
             @change="${(e) => this._updateConfig("show_filters", e.target.checked)}"
           />
-          Filter buttons
+          ${i18nT("activity.configFilterButtons")}
         </label>
-        <small>Chips to narrow the feed to chores, rewards or bonuses</small>
+        <small>${i18nT("activity.configFilterButtonsHelp")}</small>
       </div>
 
       <div class="form-group">
@@ -993,27 +1015,27 @@ class ChoremanderActivityCardEditor extends LitElement {
             ?checked="${this.config.show_relative_time !== false}"
             @change="${(e) => this._updateConfig("show_relative_time", e.target.checked)}"
           />
-          Relative times
+          ${i18nT("activity.configRelativeTimes")}
         </label>
-        <small>Show "20m ago" for recent events instead of the clock time</small>
+        <small>${i18nT("activity.configRelativeTimesHelp")}</small>
       </div>
 
-      <div class="section-heading">Layout</div>
+      <div class="section-heading">${i18nT("common.layout")}</div>
 
       <div class="form-group">
-        <label>Density</label>
+        <label>${i18nT("common.density")}</label>
         <select @change="${(e) => this._updateConfig("density", e.target.value)}">
           <option value="default" ?selected="${(this.config.density || "default") === "default"}">
-            Default
+            ${i18nT("common.densityDefault")}
           </option>
           <option value="cozy" ?selected="${this.config.density === "cozy"}">
-            Cozy — a bit tighter
+            ${i18nT("common.densityCozy")}
           </option>
           <option value="compact" ?selected="${this.config.density === "compact"}">
-            Compact — fits more events on screen
+            ${i18nT("activity.configDensityCompact")}
           </option>
         </select>
-        <small>How much space each event takes up</small>
+        <small>${i18nT("activity.configDensityHelp")}</small>
       </div>
 
       <div class="form-group">
@@ -1023,9 +1045,9 @@ class ChoremanderActivityCardEditor extends LitElement {
             ?checked="${this.config.animations !== false}"
             @change="${(e) => this._updateConfig("animations", e.target.checked)}"
           />
-          Background animations
+          ${i18nT("common.backgroundAnimations")}
         </label>
-        <small>Hover and press transitions on the filter chips</small>
+        <small>${i18nT("activity.configAnimationsHelp")}</small>
       </div>
     `;
   }
@@ -1085,7 +1107,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "choremander-activity-card",
   name: "Choremander Activity Card",
-  description: "A timeline of chores done, rewards claimed, and bonuses given",
+  description: i18nT("activity.cardDescription"),
   preview: true,
 });
 

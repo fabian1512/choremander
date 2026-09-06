@@ -28,8 +28,10 @@ CARDS: Final = [
     "choremander-schedule-card.js",
 ]
 
-# JS modules to load globally (for config flow sound preview)
+# JS modules to load globally (for config flow sound preview, and the shared
+# translation dictionary the cards read through ChoremanderI18n)
 GLOBAL_MODULES: Final = [
+    "choremander-i18n.js",
     "choremander-config-sounds.js",
 ]
 

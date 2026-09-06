@@ -20,6 +20,19 @@ const LitElement = customElements.get("hui-masonry-view")
 const html = LitElement.prototype.html;
 const css = LitElement.prototype.css;
 
+const i18nLib = window.ChoremanderI18n;
+const i18nT = (key, vars) => (i18nLib ? i18nLib.t(key, vars) : key);
+const i18nLang = (hass, override) => {
+  if (!i18nLib) return;
+  if (override && override !== "auto") {
+    i18nLib.setLanguage(override);
+    return;
+  }
+  if (hass) {
+    i18nLib.setLanguage(hass?.locale?.language || hass?.language);
+  }
+};
+
 /**
  * The integration publishes the last 30 days of activity per child. Asking for
  * a longer strip than that would draw days as "inactive" purely because they
@@ -46,6 +59,19 @@ const ACHIEVEMENTS = [
   { id: "hundred", emoji: "🥇", label: "100 done", hint: "Finish 100 chores", metric: "chores", goal: 100 },
   { id: "streak30", emoji: "💎", label: "A month!", hint: "A 30 day streak", metric: "best", goal: 30 },
 ];
+
+const ACH_I18N = {
+  first: "achFirst",
+  streak3: "achStreak3",
+  ten: "achTen",
+  points50: "achPoints50",
+  streak7: "achStreak7",
+  fifty: "achFifty",
+  streak14: "achStreak14",
+  points250: "achPoints250",
+  hundred: "achHundred",
+  streak30: "achStreak30",
+};
 
 /** How the current streak is dressed up, longest first. */
 const STREAK_TIERS = [
@@ -424,10 +450,10 @@ class ChoremanderStreakCard extends LitElement {
 
   setConfig(config) {
     if (!config.entity) {
-      throw new Error("Please define an entity (choremander streaks sensor)");
+      throw new Error(i18nT("streak.errorEntity"));
     }
     this.config = {
-      title: "Streaks",
+      title: i18nT("streak.title"),
       child_id: null, // Optional: one child instead of the whole family
       streak_days: 14, // Days in the dot strip
       achievements: "next", // "next" | "earned" | "all" | "none"
@@ -510,7 +536,7 @@ class ChoremanderStreakCard extends LitElement {
   static getStubConfig() {
     return {
       entity: "sensor.choremander_streaks",
-      title: "Streaks",
+      title: i18nT("streak.title"),
       child_id: null,
       streak_days: 14,
     };
@@ -556,8 +582,8 @@ class ChoremanderStreakCard extends LitElement {
     return html`
       <ha-card>
         <div class="error config-error">
-          <div>${this.config.entity} has no ${missing.join(", ")}</div>
-          <div>This card reads ${this.constructor.getStubConfig().entity}</div>
+          <div>${i18nT("streak.errorMissingAttributes", { entity: this.config.entity, missing: missing.join(", ") })}</div>
+          <div>${i18nT("streak.errorReadsStub", { entity: this.constructor.getStubConfig().entity })}</div>
         </div>
       </ha-card>
     `;
@@ -645,12 +671,13 @@ class ChoremanderStreakCard extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     const entity = this.hass.states[this.config.entity];
     if (!entity) {
       return html`
         <ha-card>
-          <div class="error">Entity not found: ${this.config.entity}</div>
+          <div class="error">${i18nT("streak.errorEntityNotFound", { entity: this.config.entity })}</div>
         </ha-card>
       `;
     }
@@ -696,15 +723,15 @@ class ChoremanderStreakCard extends LitElement {
               </div>`
             : ""}
           <div class="child-headline">
-            <div class="child-name">${child.name || "Someone"}</div>
+            <div class="child-name">${child.name || i18nT("common.someone")}</div>
             <div class="streak-line">
               <span class="streak-count ${tier.tone}">${streak}</span>
-              <span>day streak</span>
+              <span>${i18nT("streak.dayStreak")}</span>
               <span class="streak-emoji">${tier.emoji}</span>
             </div>
           </div>
           <div class="best">
-            best
+            ${i18nT("streak.best")}
             <strong>${best}</strong>
           </div>
         </div>
@@ -712,16 +739,16 @@ class ChoremanderStreakCard extends LitElement {
         ${this._renderDots(child)}
         ${achievements.length
           ? html`
-              <div class="achievements-label">Achievements</div>
+              <div class="achievements-label">${i18nT("streak.achievements")}</div>
               <div class="achievements">
                 ${achievements.map(
                   (achievement) => html`
                     <div
                       class="badge ${achievement.earned ? "earned" : "locked"}"
-                      title="${achievement.earned ? achievement.label : achievement.hint}"
+                      title="${achievement.earned ? i18nT(`streak.${ACH_I18N[achievement.id]}Label`) : i18nT(`streak.${ACH_I18N[achievement.id]}Hint`)}"
                     >
                       <span class="badge-emoji">${achievement.emoji}</span>
-                      <span class="badge-label">${achievement.label}</span>
+                      <span class="badge-label">${i18nT(`streak.${ACH_I18N[achievement.id]}Label`)}</span>
                     </div>
                   `
                 )}
@@ -760,7 +787,7 @@ class ChoremanderStreakCard extends LitElement {
           else if (isRest) cls += " rest";
           return html`<div
             class="${cls}"
-            title="${isRest ? `${day} — day off, nothing was scheduled` : day}"
+            title="${isRest ? i18nT("streak.dotDayOff", { day }) : day}"
           ></div>`;
         })}
       </div>
@@ -769,11 +796,17 @@ class ChoremanderStreakCard extends LitElement {
 
   _dotsLabel(child, days, active, rest) {
     const count = days.filter((day) => active.has(day)).length;
-    const label = `${child.name || "This child"} was active on ${count} of the last ${days.length} days`;
+    const label = i18nT("streak.dotActive", {
+      name: child.name || i18nT("common.someone"),
+      count,
+      days: days.length,
+    });
     // Said only when there is something to say, so a household with no schedule
     // hears the sentence it has always heard.
     const off = days.filter((day) => rest.has(day)).length;
-    return off ? `${label}, with ${off} day${off === 1 ? "" : "s"} off` : label;
+    return off
+      ? i18nT(off === 1 ? "streak.dotOffSuffixOne" : "streak.dotOffSuffixMany", { off })
+      : label;
   }
 
   _renderEmpty() {
@@ -782,8 +815,8 @@ class ChoremanderStreakCard extends LitElement {
         <ha-icon icon="mdi:fire-off"></ha-icon>
         <div class="empty-text">
           ${this.config.child_id
-            ? "That child was not found."
-            : "No children yet. Add one in the Choremander settings."}
+            ? i18nT("streak.emptyNotFound")
+            : i18nT("streak.emptyNoChildren")}
         </div>
       </div>
     `;
@@ -864,37 +897,38 @@ class ChoremanderStreakCardEditor extends LitElement {
     if (!this.hass || !this.config) {
       return html``;
     }
+    i18nLang(this.hass, this.config?.language);
 
     const entity = this.config.entity ? this.hass.states[this.config.entity] : null;
     const children = entity?.attributes?.children || [];
 
     return html`
       <div class="form-group">
-        <label>Entity</label>
+        <label>${i18nT("common.entity")}</label>
         <input
           type="text"
           .value="${this.config.entity || ""}"
           @input="${(e) => this._updateConfig("entity", e.target.value)}"
           placeholder="sensor.choremander_streaks"
         />
-        <small>The Choremander streaks sensor entity</small>
+        <small>${i18nT("streak.configEntityHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Title</label>
+        <label>${i18nT("common.title")}</label>
         <input
           type="text"
           .value="${this.config.title || ""}"
           @input="${(e) => this._updateConfig("title", e.target.value)}"
-          placeholder="Streaks"
+          placeholder="${i18nT("streak.title")}"
         />
-        <small>Card title displayed in the header (default: "Streaks")</small>
+        <small>${i18nT("streak.configTitleHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Child</label>
+        <label>${i18nT("streak.configChild")}</label>
         <select @change="${(e) => this._updateConfig("child_id", e.target.value || null)}">
-          <option value="" ?selected="${!this.config.child_id}">Everyone</option>
+          <option value="" ?selected="${!this.config.child_id}">${i18nT("common.everyone")}</option>
           ${children.map(
             (child) => html`
               <option value="${child.id}" ?selected="${this.config.child_id === child.id}">
@@ -903,11 +937,11 @@ class ChoremanderStreakCardEditor extends LitElement {
             `
           )}
         </select>
-        <small>Show one child, or the whole family stacked</small>
+        <small>${i18nT("streak.configChildHelp")}</small>
       </div>
 
       <div class="form-group">
-        <label>Days in the strip</label>
+        <label>${i18nT("streak.configDaysStrip")}</label>
         <input
           type="number"
           min="1"
@@ -916,31 +950,30 @@ class ChoremanderStreakCardEditor extends LitElement {
           @input="${(e) => this._numberChanged("streak_days", e.target.value, 1, MAX_STREAK_DAYS, 14)}"
         />
         <small>
-          How many recent days the dots cover. The integration keeps
-          ${MAX_STREAK_DAYS}.
+          ${i18nT("streak.configDaysStripHelp", { max: MAX_STREAK_DAYS })}
         </small>
       </div>
 
       <div class="form-group">
-        <label>Achievements</label>
+        <label>${i18nT("streak.configAchievements")}</label>
         <select @change="${(e) => this._updateConfig("achievements", e.target.value)}">
           <option value="next" ?selected="${(this.config.achievements || "next") === "next"}">
-            Earned, plus the next one to aim for
+            ${i18nT("streak.configAchievementsEarned")}
           </option>
           <option value="earned" ?selected="${this.config.achievements === "earned"}">
-            Only what has been earned
+            ${i18nT("streak.configAchievementsOnly")}
           </option>
           <option value="all" ?selected="${this.config.achievements === "all"}">
-            The whole ladder
+            ${i18nT("streak.configAchievementsAll")}
           </option>
           <option value="none" ?selected="${this.config.achievements === "none"}">
-            Hide them
+            ${i18nT("streak.configAchievementsHide")}
           </option>
         </select>
-        <small>Milestones are worked out from chores done, points earned and best streak</small>
+        <small>${i18nT("streak.configAchievementsHelp")}</small>
       </div>
 
-      <div class="section-heading">Layout</div>
+      <div class="section-heading">${i18nT("common.layout")}</div>
 
       <div class="form-group">
         <label>
@@ -949,24 +982,24 @@ class ChoremanderStreakCardEditor extends LitElement {
             ?checked="${this.config.show_avatar !== false}"
             @change="${(e) => this._updateConfig("show_avatar", e.target.checked)}"
           />
-          Show avatars
+          ${i18nT("streak.configShowAvatars")}
         </label>
       </div>
 
       <div class="form-group">
-        <label>Density</label>
+        <label>${i18nT("common.density")}</label>
         <select @change="${(e) => this._updateConfig("density", e.target.value)}">
           <option value="default" ?selected="${(this.config.density || "default") === "default"}">
-            Default
+            ${i18nT("common.densityDefault")}
           </option>
           <option value="cozy" ?selected="${this.config.density === "cozy"}">
-            Cozy — a bit tighter
+            ${i18nT("common.densityCozy")}
           </option>
           <option value="compact" ?selected="${this.config.density === "compact"}">
-            Compact — fits more children on screen
+            ${i18nT("streak.configDensityCompact")}
           </option>
         </select>
-        <small>How much space each child takes up</small>
+        <small>${i18nT("streak.configDensityHelp")}</small>
       </div>
 
       <div class="form-group">
@@ -976,9 +1009,9 @@ class ChoremanderStreakCardEditor extends LitElement {
             ?checked="${this.config.animations !== false}"
             @change="${(e) => this._updateConfig("animations", e.target.checked)}"
           />
-          Emphasise today
+          ${i18nT("streak.configEmphasiseToday")}
         </label>
-        <small>Scales up today's dot. Turn off for a perfectly even strip.</small>
+        <small>${i18nT("streak.configEmphasiseTodayHelp")}</small>
       </div>
     `;
   }
@@ -1037,7 +1070,7 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "choremander-streak-card",
   name: "Choremander Streak Card",
-  description: "Day streaks, recent activity and milestones for each child",
+  description: i18nT("streak.cardDescription"),
   preview: true,
 });
 
