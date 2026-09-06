@@ -1,0 +1,557 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Willkommen bei Choremander!",
+        "description": "Richte dein Familien-Aufgabensystem ein. Du kannst die Punkte-Währung anpassen, die die Kinder verdienen.",
+        "data": {
+          "points_name": "Name der Punkte-Währung (z. B. Sterne, Münzen, Bucks)",
+          "points_icon": "Punkte-Icon"
+        }
+      }
+    },
+    "error": {
+      "name_required": "Name ist erforderlich"
+    },
+    "abort": {
+      "already_configured": "Choremander ist bereits konfiguriert"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Choremander-Einstellungen",
+        "menu_options": {
+          "manage_children": "Kinder verwalten",
+          "manage_chores": "Aufgaben verwalten",
+          "manage_rewards": "Belohnungen verwalten",
+          "settings": "Einstellungen"
+        }
+      },
+      "manage_children": {
+        "title": "Kinder verwalten",
+        "description": "Kinder hinzufügen, bearbeiten oder entfernen",
+        "menu_options": {
+          "add_child": "Neues Kind hinzufügen",
+          "init": "Zurück zum Hauptmenü"
+        }
+      },
+      "add_child": {
+        "title": "Neues Kind hinzufügen",
+        "description": "Gib die Informationen des Kindes ein",
+        "data": {
+          "name": "Name des Kindes",
+          "avatar": "Avatar"
+        }
+      },
+      "edit_child": {
+        "title": "Kind bearbeiten: {child_name}",
+        "description": "Dieses Kind bearbeiten oder löschen",
+        "data": {
+          "name": "Name des Kindes",
+          "avatar": "Avatar",
+          "action": "Aktion"
+        }
+      },
+      "manage_chores": {
+        "title": "Aufgaben verwalten",
+        "description": "Aufgaben hinzufügen, bearbeiten oder entfernen",
+        "menu_options": {
+          "add_chore": "Einzelne Aufgabe hinzufügen",
+          "add_chores_bulk": "Mehrere Aufgaben hinzufügen",
+          "init": "Zurück zum Hauptmenü"
+        }
+      },
+      "add_chore": {
+        "title": "Neue Aufgabe hinzufügen",
+        "description": "Erstelle eine neue Aufgabe für deine Kinder",
+        "data": {
+          "name": "Aufgabenname",
+          "description": "Beschreibung (optional)",
+          "points": "Punkte",
+          "time_category": "Tageszeit",
+          "due_days": "Fälligkeitstage (optional)",
+          "assigned_to": "Zugewiesen an (leer lassen für alle Kinder)",
+          "requires_approval": "Erfordert Freigabe durch die Eltern",
+          "daily_limit": "Tägliches Erledigungslimit",
+          "completion_percentage_per_month": "Erledigungs-% pro Monat"
+        },
+        "data_description": {
+          "daily_limit": "Wie oft pro Tag diese Aufgabe erledigt werden kann",
+          "due_days": "Die Wochentage, an denen diese Aufgabe fällig ist. Leer lassen, dann fällt sie auf jeden Tag",
+          "completion_percentage_per_month": "An wie vielen der fälligen Tagen sie tatsächlich erledigt wird (100 = jedes Mal). Die Fälligkeitstage legen bereits fest, wie oft sie drankommt"
+        }
+      },
+      "add_chores_bulk": {
+        "title": "Mehrere Aufgaben hinzufügen",
+        "description": "Mehrere Aufgaben gleichzeitig mit denselben Einstellungen anlegen. Namen zeilenweise oder kommagetrennt eingeben.",
+        "data": {
+          "chore_names": "Aufgabennamen (einer pro Zeile oder kommagetrennt)",
+          "points": "Punkte (für alle)",
+          "time_category": "Tageszeit (für alle)",
+          "due_days": "Fälligkeitstage (optional)",
+          "assigned_to": "Zugewiesen an (leer lassen für alle Kinder)",
+          "requires_approval": "Erfordert Freigabe durch die Eltern",
+          "daily_limit": "Tägliches Erledigungslimit",
+          "completion_percentage_per_month": "Erledigungs-% pro Monat"
+        },
+        "data_description": {
+          "daily_limit": "Wie oft pro Tag diese Aufgabe erledigt werden kann",
+          "due_days": "Die Wochentage, an denen diese Aufgabe fällig ist. Leer lassen, dann fällt sie auf jeden Tag",
+          "completion_percentage_per_month": "An wie vielen der fälligen Tagen sie tatsächlich erledigt wird (100 = jedes Mal). Die Fälligkeitstage legen bereits fest, wie oft sie drankommt"
+        }
+      },
+      "edit_chore": {
+        "title": "Aufgabe bearbeiten: {chore_name}",
+        "description": "Diese Aufgabe bearbeiten oder löschen",
+        "data": {
+          "name": "Aufgabenname",
+          "description": "Beschreibung",
+          "points": "Punkte",
+          "time_category": "Tageszeit",
+          "due_days": "Fälligkeitstage",
+          "assigned_to": "Zugewiesen an",
+          "requires_approval": "Erfordert Freigabe durch die Eltern",
+          "daily_limit": "Tägliches Erledigungslimit",
+          "completion_percentage_per_month": "Erledigungs-% pro Monat",
+          "action": "Aktion"
+        },
+        "data_description": {
+          "daily_limit": "Wie oft pro Tag diese Aufgabe erledigt werden kann",
+          "due_days": "Die Wochentage, an denen diese Aufgabe fällig ist. Leer lassen, dann fällt sie auf jeden Tag",
+          "completion_percentage_per_month": "An wie vielen der fälligen Tagen sie tatsächlich erledigt wird (100 = jedes Mal). Die Fälligkeitstage legen bereits fest, wie oft sie drankommt"
+        }
+      },
+      "manage_rewards": {
+        "title": "Belohnungen verwalten",
+        "description": "Belohnungen hinzufügen, bearbeiten oder entfernen",
+        "menu_options": {
+          "add_reward": "Neue Belohnung hinzufügen",
+          "init": "Zurück zum Hauptmenü"
+        }
+      },
+      "add_reward": {
+        "title": "Neue Belohnung hinzufügen",
+        "description": "Erstelle eine Belohnung, die die Kinder verdienen können",
+        "data": {
+          "name": "Name der Belohnung",
+          "description": "Beschreibung (optional)",
+          "cost": "Punktekosten",
+          "icon": "Symbol",
+          "assigned_to": "Zugewiesen an (leer lassen für alle Kinder)",
+          "is_jackpot": "Ist Jackpot",
+          "days_to_goal": "Tage bis zum Ziel",
+          "override_point_value": "Punktwert überschreiben"
+        },
+        "data_description": {
+          "is_jackpot": "Sterne aller zugewiesenen Kinder zusammenlegen",
+          "days_to_goal": "Anzahl der Tage, um diese Belohnung zu erreichen",
+          "override_point_value": "Manuelle Kosten statt dynamischer Berechnung verwenden"
+        }
+      },
+      "edit_reward": {
+        "title": "Belohnung bearbeiten: {reward_name}",
+        "description": "Diese Belohnung bearbeiten oder löschen",
+        "data": {
+          "name": "Name der Belohnung",
+          "description": "Beschreibung",
+          "cost": "Punktekosten",
+          "icon": "Symbol",
+          "assigned_to": "Zugewiesen an",
+          "is_jackpot": "Ist Jackpot",
+          "days_to_goal": "Tage bis zum Ziel",
+          "override_point_value": "Punktwert überschreiben",
+          "action": "Aktion"
+        },
+        "data_description": {
+          "is_jackpot": "Sterne aller zugewiesenen Kinder zusammenlegen",
+          "days_to_goal": "Anzahl der Tage, um diese Belohnung zu erreichen",
+          "override_point_value": "Manuelle Kosten statt dynamischer Berechnung verwenden"
+        }
+      },
+      "settings": {
+        "title": "Einstellungen",
+        "description": "Choremander-Einstellungen konfigurieren",
+        "data": {
+          "points_name": "Name der Punkte-Währung",
+          "points_icon": "Punkte-Icon"
+        }
+      }
+    },
+    "error": {
+      "name_required": "Name ist erforderlich"
+    }
+  },
+  "services": {
+    "complete_chore": {
+      "name": "Aufgabe abschließen",
+      "description": "Eine Aufgabe durch ein Kind als erledigt markieren",
+      "fields": {
+        "chore_id": {
+          "name": "Aufgaben-ID",
+          "description": "Die ID der Aufgabe, die abgeschlossen werden soll"
+        },
+        "child_id": {
+          "name": "Kind-ID",
+          "description": "Die ID des Kindes, das die Aufgabe abschließt"
+        }
+      }
+    },
+    "approve_chore": {
+      "name": "Aufgabe freigeben",
+      "description": "Eine abgeschlossene Aufgabe freigeben und Punkte vergeben",
+      "fields": {
+        "completion_id": {
+          "name": "Erledigungs-ID",
+          "description": "Die ID der zu freigebenden Aufgabenerledigung"
+        }
+      }
+    },
+    "reject_chore": {
+      "name": "Aufgabe ablehnen",
+      "description": "Eine abgeschlossene Aufgabe ablehnen",
+      "fields": {
+        "completion_id": {
+          "name": "Erledigungs-ID",
+          "description": "Die ID der abzulehnenden Aufgabenerledigung"
+        }
+      }
+    },
+    "claim_reward": {
+      "name": "Belohnung einlösen",
+      "description": "Kind löst eine Belohnung mit seinen Punkten ein",
+      "fields": {
+        "reward_id": {
+          "name": "Belohnungs-ID",
+          "description": "Die ID der einzulösenden Belohnung"
+        },
+        "child_id": {
+          "name": "Kind-ID",
+          "description": "Die ID des Kindes, das die Belohnung einlöst"
+        }
+      }
+    },
+    "approve_reward": {
+      "name": "Belohnung freigeben",
+      "description": "Eine Belohnungseinlösung freigeben",
+      "fields": {
+        "claim_id": {
+          "name": "Einlösungs-ID",
+          "description": "Die ID der freizugebenden Belohnungseinlösung"
+        }
+      }
+    },
+    "add_points": {
+      "name": "Punkte hinzufügen",
+      "description": "Einem Kind Bonuspunkte hinzufügen",
+      "fields": {
+        "child_id": {
+          "name": "Kind-ID",
+          "description": "Die ID des Kindes, das Punkte erhalten soll"
+        },
+        "points": {
+          "name": "Punkte",
+          "description": "Die Anzahl der hinzuzufügenden Punkte"
+        },
+        "reason": {
+          "name": "Grund",
+          "description": "Optionaler Grund für den Bonus"
+        }
+      }
+    },
+    "remove_points": {
+      "name": "Punkte abziehen",
+      "description": "Einem Kind Punkte abziehen (Abmahnung)",
+      "fields": {
+        "child_id": {
+          "name": "Kind-ID",
+          "description": "Die ID des Kindes, dem Punkte abgezogen werden sollen"
+        },
+        "points": {
+          "name": "Punkte",
+          "description": "Die Anzahl der abzuziehenden Punkte"
+        },
+        "reason": {
+          "name": "Grund",
+          "description": "Optionaler Grund für die Abmahnung"
+        }
+      }
+    },
+    "set_chore_order": {
+      "name": "Aufgabenreihenfolge festlegen",
+      "description": "Legt fest, in welcher Reihenfolge die Aufgaben eines Kindes auf dessen Karte erscheinen. Die Neuanordnen-Karte ruft dies auf, wenn eine Aufgabe an eine neue Position gezogen wird.",
+      "fields": {
+        "child_id": {
+          "name": "Kind-ID",
+          "description": "Die ID des Kindes, dessen Reihenfolge festgelegt wird"
+        },
+        "chore_order": {
+          "name": "Aufgabenreihenfolge",
+          "description": "Aufgaben-IDs in der Reihenfolge, in der sie erscheinen sollen"
+        }
+      }
+    },
+    "set_chore_schedule": {
+      "name": "Aufgabenplan festlegen",
+      "description": "Legt fest, an welchen Tagen eine Aufgabe fällig ist und wer dran ist. Jedes Feld ist optional; alles, was nicht übergeben wird, bleibt unverändert. Ein Aufruf kann also die Rotation ändern, ohne die Fälligkeitstage anzutasten. Ein leeres Feld wird mit einer leeren Liste oder einem leeren Wörterbuch übergeben.",
+      "fields": {
+        "chore_id": {
+          "name": "Aufgaben-ID",
+          "description": "Die ID der Aufgabe, die geplant wird"
+        },
+        "due_days": {
+          "name": "Fälligkeitstage",
+          "description": "Wochentage in Kleinbuchstaben, an denen die Aufgabe fällig ist, z. B. [\"monday\", \"friday\"]. Eine leere Liste bedeutet jeden Tag."
+        },
+        "rotation": {
+          "name": "Rotation",
+          "description": "\"none\" für keine Rotation, \"occurrence\", um bei jedem Mal zu wechseln, oder \"week\", um immer eine ganze Woche einem Kind zu geben."
+        },
+        "rotation_order": {
+          "name": "Rotationsreihenfolge",
+          "description": "Kind-IDs in der Reihenfolge, in der sie drankommen. Leer fällt auf die Kinder zurück, denen die Aufgabe zugewiesen ist."
+        },
+        "rotation_anchor": {
+          "name": "Rotationsanker",
+          "description": "ISO-Datum, ab dem die Rotation zählt, z. B. \"2026-08-03\". Ändere es, um den Wechsel zu verschieben, ohne die Kinder umzuordnen."
+        },
+        "day_overrides": {
+          "name": "Wochentag-Ausnahmen",
+          "description": "Dauerhafte Ausnahmen pro Wochentag, als Wochentag zu Kind-IDs - z. B. {\"saturday\": [\"child_maya\"]}. Eine leere Liste bedeutet: an diesem Tag niemand."
+        },
+        "date_overrides": {
+          "name": "Datums-Ausnahmen",
+          "description": "Einmalige Ausnahmen für ein einzelnes Datum, als ISO-Datum zu Kind-IDs - z. B. {\"2026-08-08\": [\"child_krishna\"]}. Diese gewinnen über jede andere Regel, und Einträge, die älter als 60 Tage sind, werden beim Speichern verworfen."
+        }
+      }
+    },
+    "add_chore": {
+      "name": "Aufgabe hinzufügen",
+      "description": "Eine neue Aufgabe anlegen. Nur der Name ist erforderlich; jedes andere Feld fällt auf seinen Standardwert zurück. Planungsfelder werden über denselben Code-Pfad geschrieben wie set_chore_schedule.",
+      "fields": {
+        "name": {
+          "name": "Name",
+          "description": "Der Name der anzulegenden Aufgabe"
+        },
+        "points": {
+          "name": "Punkte",
+          "description": "Punkte, die bei Freigabe vergeben werden (Standard 10)"
+        },
+        "description": {
+          "name": "Beschreibung",
+          "description": "Optionale Beschreibung, die auf der Karte erscheint"
+        },
+        "assigned_to": {
+          "name": "Zugewiesen an",
+          "description": "Kind-IDs, denen die Aufgabe zugewiesen ist, z. B. [\"child_maya\"]"
+        },
+        "requires_approval": {
+          "name": "Erfordert Freigabe",
+          "description": "Ob die Eltern jede Erledigung freigeben müssen, bevor Punkte vergeben werden (Standard true)"
+        },
+        "time_category": {
+          "name": "Tageszeit",
+          "description": "Wann die Aufgabe in den Tag gehört - morning, afternoon, evening, night oder anytime (Standard anytime)"
+        },
+        "daily_limit": {
+          "name": "Tageslimit",
+          "description": "Wie oft pro Tag die Aufgabe erledigt werden kann (Standard 1)"
+        },
+        "completion_sound": {
+          "name": "Erledigungston",
+          "description": "Ton, der bei Erledigung abgespielt wird (Standard coin)"
+        },
+        "completion_percentage_per_month": {
+          "name": "Erledigungs-% pro Monat",
+          "description": "An wie vielen der fälligen Tagen die Aufgabe voraussichtlich erledigt wird, 100 = jedes Mal (Standard 100)"
+        },
+        "due_days": {
+          "name": "Fälligkeitstage",
+          "description": "Wochentage in Kleinbuchstaben, an denen die Aufgabe fällig ist, z. B. [\"monday\", \"friday\"]. Eine leere Liste bedeutet jeden Tag."
+        },
+        "rotation": {
+          "name": "Rotation",
+          "description": "\"none\" für keine Rotation, \"occurrence\", um bei jedem Mal zu wechseln, oder \"week\", um immer eine ganze Woche einem Kind zu geben."
+        },
+        "rotation_order": {
+          "name": "Rotationsreihenfolge",
+          "description": "Kind-IDs in der Reihenfolge, in der sie drankommen. Leer fällt auf die Kinder zurück, denen die Aufgabe zugewiesen ist."
+        },
+        "rotation_anchor": {
+          "name": "Rotationsanker",
+          "description": "ISO-Datum, ab dem die Rotation zählt, z. B. \"2026-08-03\". Ändere es, um den Wechsel zu verschieben, ohne die Kinder umzuordnen."
+        },
+        "day_overrides": {
+          "name": "Wochentag-Ausnahmen",
+          "description": "Dauerhafte Ausnahmen pro Wochentag, als Wochentag zu Kind-IDs - z. B. {\"saturday\": [\"child_maya\"]}. Eine leere Liste bedeutet: an diesem Tag niemand."
+        },
+        "date_overrides": {
+          "name": "Datums-Ausnahmen",
+          "description": "Einmalige Ausnahmen für ein einzelnes Datum, als ISO-Datum zu Kind-IDs - z. B. {\"2026-08-08\": [\"child_krishna\"]}. Diese gewinnen über jede andere Regel, und Einträge, die älter als 60 Tage sind, werden beim Speichern verworfen."
+        }
+      }
+    },
+    "update_chore": {
+      "name": "Aufgabe bearbeiten",
+      "description": "Die Eigenschaften einer bestehenden Aufgabe ändern. Nur die übergebenen Felder werden geändert; alles andere, einschließlich des Plans, bleibt unverändert. Umbenennen geschieht über das Feld name.",
+      "fields": {
+        "chore_id": {
+          "name": "Aufgaben-ID",
+          "description": "Die ID der zu ändernden Aufgabe"
+        },
+        "name": {
+          "name": "Name",
+          "description": "Neuer Name für die Aufgabe"
+        },
+        "description": {
+          "name": "Beschreibung",
+          "description": "Neue Beschreibung für die Aufgabe"
+        },
+        "points": {
+          "name": "Punkte",
+          "description": "Neuer Punktwert"
+        },
+        "assigned_to": {
+          "name": "Zugewiesen an",
+          "description": "Neue Liste von Kind-IDs, denen die Aufgabe zugewiesen ist"
+        },
+        "requires_approval": {
+          "name": "Erfordert Freigabe",
+          "description": "Neue Freigabe-Einstellung"
+        },
+        "time_category": {
+          "name": "Tageszeit",
+          "description": "Neue Tageszeit - morning, afternoon, evening, night oder anytime"
+        },
+        "daily_limit": {
+          "name": "Tageslimit",
+          "description": "Neues tägliches Erledigungslimit"
+        },
+        "completion_sound": {
+          "name": "Erledigungston",
+          "description": "Neuer Erledigungston"
+        },
+        "completion_percentage_per_month": {
+          "name": "Erledigungs-% pro Monat",
+          "description": "Neue erwartete Erledigungsrate, 100 = jedes Mal"
+        }
+      }
+    },
+    "delete_chore": {
+      "name": "Aufgabe löschen",
+      "description": "Eine bestehende Aufgabe löschen. Die erledigte Historie bleibt erhalten.",
+      "fields": {
+        "chore_id": {
+          "name": "Aufgaben-ID",
+          "description": "Die ID der zu löschenden Aufgabe"
+        }
+      }
+    },
+    "add_reward": {
+      "name": "Belohnung hinzufügen",
+      "description": "Eine neue Belohnung anlegen. Nur der Name ist erforderlich; jedes andere Feld fällt auf seinen Standardwert zurück.",
+      "fields": {
+        "name": {
+          "name": "Name",
+          "description": "Der Name der anzulegenden Belohnung"
+        },
+        "cost": {
+          "name": "Kosten",
+          "description": "Punktekosten der Belohnung. Mit ausgeschaltetem override_point_value nur ein Fallback (Standard 50)"
+        },
+        "description": {
+          "name": "Beschreibung",
+          "description": "Optionale Beschreibung, die auf der Karte erscheint"
+        },
+        "icon": {
+          "name": "Symbol",
+          "description": "Material-Symbol der Belohnung (Standard mdi:gift)"
+        },
+        "assigned_to": {
+          "name": "Zugewiesen an",
+          "description": "Kind-IDs, denen die Belohnung zur Verfügung steht, z. B. [\"child_maya\"]. Eine leere Liste bedeutet alle Kinder."
+        },
+        "is_jackpot": {
+          "name": "Ist Jackpot",
+          "description": "Sterne aller zugewiesenen Kinder zusammenlegen (Standard false)"
+        },
+        "override_point_value": {
+          "name": "Punktwert überschreiben",
+          "description": "Manuelle Kosten statt des dynamisch berechneten Preises verwenden (Standard false)"
+        },
+        "days_to_goal": {
+          "name": "Tage bis zum Ziel",
+          "description": "Anzahl der Tage, die die Kinder haben, um die Belohnung zu erreichen (Standard 30)"
+        }
+      }
+    },
+    "update_reward": {
+      "name": "Belohnung bearbeiten",
+      "description": "Die Eigenschaften einer bestehenden Belohnung ändern. Nur die übergebenen Felder werden geändert; alles andere bleibt unverändert. Umbenennen geschieht über das Feld name.",
+      "fields": {
+        "reward_id": {
+          "name": "Belohnungs-ID",
+          "description": "Die ID der zu ändernden Belohnung"
+        },
+        "name": {
+          "name": "Name",
+          "description": "Neuer Name für die Belohnung"
+        },
+        "description": {
+          "name": "Beschreibung",
+          "description": "Neue Beschreibung für die Belohnung"
+        },
+        "cost": {
+          "name": "Kosten",
+          "description": "Neue Punktekosten"
+        },
+        "icon": {
+          "name": "Symbol",
+          "description": "Neues Material-Symbol der Belohnung"
+        },
+        "assigned_to": {
+          "name": "Zugewiesen an",
+          "description": "Neue Liste von Kind-IDs, denen die Belohnung zur Verfügung steht"
+        },
+        "is_jackpot": {
+          "name": "Ist Jackpot",
+          "description": "Neue Jackpot-Einstellung"
+        },
+        "override_point_value": {
+          "name": "Punktwert überschreiben",
+          "description": "Neue Überschreibungs-Einstellung"
+        },
+        "days_to_goal": {
+          "name": "Tage bis zum Ziel",
+          "description": "Neue Anzahl der Tage, um die Belohnung zu erreichen"
+        }
+      }
+    },
+    "delete_reward": {
+      "name": "Belohnung löschen",
+      "description": "Eine bestehende Belohnung löschen. Freigegebene Einlösungen bleiben als Historie erhalten.",
+      "fields": {
+        "reward_id": {
+          "name": "Belohnungs-ID",
+          "description": "Die ID der zu löschenden Belohnung"
+        }
+      }
+    }
+  },
+  "issues": {
+    "deleted_lovelace_resources": {
+      "title": "Fehlende Lovelace-Karten-Ressourcen wiederherstellen",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Fehlende Lovelace-Karten-Ressourcen wiederherstellen",
+            "description": "Deine Dashboards verwenden {count} benutzerdefinierte(n) Karte(n), deren JavaScript zwar in deinem `www`-Ordner liegt, aber nicht als Lovelace-Ressource registriert ist, sodass diese Karten nicht laden können:\n\n{resources}\n\nEine frühere Version von Choremander konnte Ressourcen anderer Karten löschen - sie schrieb in die Ressourcenliste, bevor Home Assistant sie fertig geladen hatte, und überschrieb dabei den Rest. Dieser Fehler ist behoben, aber alle dabei entfernten Einträge müssen wieder hinzugefügt werden. Wenn du diese selbst entfernt hast oder sie nie registriert hattest, kannst du das ignorieren und abweisen.\n\nWähle **Absenden**, um sie erneut zu registrieren. Es wird nichts anderes geändert, und alles, was du bereits von Hand wieder hinzugefügt hast, bleibt unangetastet. Lade danach deinen Browser neu."
+          }
+        },
+        "abort": {
+          "nothing_to_restore": "Jede Karte, die deine Dashboards verwenden, ist bereits registriert - es gibt nichts wiederherzustellen."
+        }
+      }
+    }
+  }
+}

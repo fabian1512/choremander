@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from custom_components.choremander.frontend import CARDS, URL_BASE
 from tests.e2e.test_lovelace_resources import CARDS as E2E_CARDS
@@ -120,6 +121,7 @@ def test_the_seeded_third_party_module_actually_exists() -> None:
 INTEGRATION = Path(__file__).resolve().parents[2] / "custom_components" / "choremander"
 STRINGS = INTEGRATION / "strings.json"
 TRANSLATIONS_EN = INTEGRATION / "translations" / "en.json"
+TRANSLATIONS_DE = INTEGRATION / "translations" / "de.json"
 
 
 def test_the_english_translations_match_strings_json() -> None:
@@ -137,6 +139,40 @@ def test_the_english_translations_match_strings_json() -> None:
         "custom_components/choremander/translations/en.json has drifted from "
         "strings.json. Copy the changed block across so the UI shows what the "
         "source says."
+    )
+
+
+def _translation_key_paths(data: Any, prefix: str = "") -> set[str]:
+    """Every leaf-or-branch path in a translation file, as dotted keys."""
+    paths = set()
+    for key, value in data.items():
+        path = f"{prefix}.{key}" if prefix else key
+        paths.add(path)
+        if isinstance(value, dict):
+            paths |= _translation_key_paths(value, path)
+    return paths
+
+
+def test_the_german_translation_covers_every_string() -> None:
+    """`translations/de.json` must carry an entry for every string.
+
+    A missing German key does not crash anything - Home Assistant falls back
+    to English key by key - but it ships half a translation, and the only way
+    to notice is a service description or a config-flow step suddenly back in
+    English on a German instance. Key paths, not text, are compared: the
+    wording is free to differ, the shape is not.
+    """
+    strings = json.loads(STRINGS.read_text())
+    german = json.loads(TRANSLATIONS_DE.read_text())
+
+    missing = _translation_key_paths(strings) - _translation_key_paths(german)
+    extra = _translation_key_paths(german) - _translation_key_paths(strings)
+
+    assert not missing and not extra, (
+        "translations/de.json is out of shape with strings.json. "
+        f"Missing in German: {sorted(missing)!r}; unexpected in German: {sorted(extra)!r}. "
+        "Every key in strings.json needs a German counterpart, and German "
+        "should not invent keys the source does not have."
     )
 
 
