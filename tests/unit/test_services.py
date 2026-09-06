@@ -35,6 +35,12 @@ SERVICE_PAYLOADS: dict[str, dict[str, Any]] = {
     "remove_points": {"child_id": "child_x", "points": 1},
     "set_chore_order": {"child_id": "child_x", "chore_order": ["chore_x"]},
     "set_chore_schedule": {"chore_id": "chore_x", "due_days": ["monday"]},
+    "add_chore": {"name": "New Chore"},
+    "update_chore": {"chore_id": "chore_x", "points": 5},
+    "delete_chore": {"chore_id": "chore_x"},
+    "add_reward": {"name": "New Reward"},
+    "update_reward": {"reward_id": "reward_x", "cost": 5},
+    "delete_reward": {"reward_id": "reward_x"},
 }
 ALL_SERVICES = list(SERVICE_PAYLOADS)
 
@@ -58,7 +64,7 @@ async def household(
 # ---------------------------------------------------------------------------
 
 
-async def test_setup_registers_all_nine_services(
+async def test_setup_registers_all_fifteen_services(
     hass: HomeAssistant, bypass_frontend_registration: None, init_integration: Any
 ) -> None:
     """Setting up a single entry exposes the full Choremander service API."""
@@ -67,7 +73,7 @@ async def test_setup_registers_all_nine_services(
 
     registered = set(hass.services.async_services_for_domain(DOMAIN))
     assert registered == set(ALL_SERVICES), (
-        "the registered service set drifted from the expected 9; "
+        "the registered service set drifted from the expected 15; "
         f"unexpected extras: {sorted(registered - set(ALL_SERVICES))!r}"
     )
 
@@ -535,3 +541,200 @@ async def test_reason_travels_from_the_service_call_into_the_ledger(
     assert entry.points == 4
     assert entry.reason == "Helped a sibling"
     assert entry.child_id == child.id
+
+
+# ---------------------------------------------------------------------------
+# CRUD services
+# ---------------------------------------------------------------------------
+
+
+async def test_add_chore_service_fills_the_fields_it_was_not_given_with_defaults(
+    hass: HomeAssistant, household: dict[str, Any]
+) -> None:
+    """A bare add_chore produces a chore with the same defaults as the UI."""
+    coordinator: ChoremanderCoordinator = household["coordinator"]
+
+    await hass.services.async_call(DOMAIN, "add_chore", {"name": "Water Plants"}, blocking=True)
+
+    created = [c for c in coordinator.data["chores"] if c.name == "Water Plants"]
+    assert len(created) == 1, f"add_chore should have created exactly one chore, got {created!r}"
+    chore = created[0]
+    assert chore.points == 10, "an unnamed points field must fall back to the model default"
+    assert chore.requires_approval is True and chore.daily_limit == 1
+    assert chore.due_days == [] and chore.rotation == "none", (
+        "a chore created without schedule fields starts unscheduled"
+    )
+
+
+async def test_add_chore_service_writes_the_schedule_fields_it_was_given(
+    hass: HomeAssistant, household: dict[str, Any]
+) -> None:
+    """Schedule fields ride the same code path as `set_chore_schedule`.
+
+    The handler must not build the schedule by hand - a second writer would
+    drift from the one the schedule card uses.
+    """
+    coordinator: ChoremanderCoordinator = household["coordinator"]
+    child: Child = household["child"]
+
+    await hass.services.async_call(
+        DOMAIN,
+        "add_chore",
+        {
+            "name": "Trash",
+            "due_days": ["monday", "friday"],
+            "rotation": "occurrence",
+            "rotation_order": [child.id],
+        },
+        blocking=True,
+    )
+
+    stored = next(c for c in coordinator.data["chores"] if c.name == "Trash")
+    assert stored.due_days == ["monday", "friday"]
+    assert stored.rotation == "occurrence"
+    assert stored.rotation_order == [child.id]
+
+
+async def test_update_chore_service_changes_only_the_fields_it_names(
+    hass: HomeAssistant, household: dict[str, Any]
+) -> None:
+    """A partial update leaves the unnamed fields - and the schedule - alone."""
+    coordinator: ChoremanderCoordinator = household["coordinator"]
+    chore: Chore = household["chore"]
+
+    await coordinator.async_set_chore_schedule(chore.id, due_days=["saturday"])
+    await hass.services.async_call(
+        DOMAIN, "update_chore", {"chore_id": chore.id, "points": 7}, blocking=True
+    )
+
+    stored = coordinator.get_chore(chore.id)
+    assert stored.points == 7, "the named field must change"
+    assert stored.name == "Make Bed", "and the unnamed fields must survive it"
+    assert stored.due_days == ["saturday"], (
+        "update_chore accepts no schedule fields, so the schedule written "
+        "beforehand must still be there"
+    )
+
+
+async def test_update_chore_service_renames_through_the_name_field(
+    hass: HomeAssistant, household: dict[str, Any]
+) -> None:
+    """Renaming is a normal update, not a separate service."""
+    chore: Chore = household["chore"]
+
+    await hass.services.async_call(
+        DOMAIN, "update_chore", {"chore_id": chore.id, "name": "Make Your Bed"}, blocking=True
+    )
+
+    stored = [c.name for c in household["coordinator"].data["chores"]]
+    assert stored == ["Make Your Bed"], f"the chore should carry its new name, got {stored!r}"
+
+
+async def test_update_chore_service_raises_for_an_unknown_chore(
+    hass: HomeAssistant, household: dict[str, Any]
+) -> None:
+    """A typo'd chore id must not quietly create a ghost chore."""
+    with pytest.raises(ValueError) as excinfo:
+        await hass.services.async_call(
+            DOMAIN, "update_chore", {"chore_id": "chore_nope", "points": 5}, blocking=True
+        )
+
+    assert str(excinfo.value) == "Chore chore_nope not found", (
+        f"expected the lookup failure, got {excinfo.value}"
+    )
+    assert household["coordinator"].data["chores"] == [household["chore"]], (
+        "nothing should have been added to storage"
+    )
+
+
+async def test_delete_chore_service_removes_exactly_the_named_chore(
+    hass: HomeAssistant, household: dict[str, Any]
+) -> None:
+    """delete_chore is scoped to its chore id, like the coordinator's remove."""
+    coordinator: ChoremanderCoordinator = household["coordinator"]
+    chore: Chore = household["chore"]
+
+    await hass.services.async_call(DOMAIN, "add_chore", {"name": "Temporary"}, blocking=True)
+    temporary = next(c for c in coordinator.data["chores"] if c.name == "Temporary")
+    await hass.services.async_call(
+        DOMAIN, "delete_chore", {"chore_id": temporary.id}, blocking=True
+    )
+
+    remaining = [c.id for c in coordinator.data["chores"]]
+    assert remaining == [chore.id], f"only the deleted chore should be gone, got {remaining!r}"
+
+
+async def test_add_reward_service_applies_the_fields_it_was_given(
+    hass: HomeAssistant, household: dict[str, Any]
+) -> None:
+    """A reward created through the service round-trips with its settings."""
+    coordinator: ChoremanderCoordinator = household["coordinator"]
+
+    await hass.services.async_call(
+        DOMAIN,
+        "add_reward",
+        {
+            "name": "Ice Cream",
+            "cost": 8,
+            "override_point_value": True,
+            "assigned_to": [household["child"].id],
+        },
+        blocking=True,
+    )
+
+    rewards = coordinator.data["rewards"]
+    assert len(rewards) == 1, f"one reward should exist, got {rewards!r}"
+    reward = rewards[0]
+    assert (reward.name, reward.cost, reward.override_point_value) == ("Ice Cream", 8, True)
+    assert reward.days_to_goal == 30, "the unnamed days_to_goal must keep its default"
+    assert reward.icon == "mdi:gift"
+    assert reward.assigned_to == [household["child"].id]
+
+
+async def test_update_reward_service_changes_only_the_fields_it_names(
+    hass: HomeAssistant, household: dict[str, Any]
+) -> None:
+    """A reward update renames and reprices without touching the rest."""
+    coordinator: ChoremanderCoordinator = household["coordinator"]
+    reward = await coordinator.async_add_reward("Screen Time", cost=10, days_to_goal=14)
+
+    await hass.services.async_call(
+        DOMAIN,
+        "update_reward",
+        {"reward_id": reward.id, "name": "Movie Night", "cost": 25},
+        blocking=True,
+    )
+
+    stored = coordinator.get_reward(reward.id)
+    assert stored is not None
+    assert (stored.name, stored.cost) == ("Movie Night", 25), "the named fields must change"
+    assert stored.days_to_goal == 14, "and the unnamed ones must survive it"
+    assert stored.icon == "mdi:gift"
+
+
+async def test_update_reward_service_raises_for_an_unknown_reward(
+    hass: HomeAssistant, household: dict[str, Any]
+) -> None:
+    """Same ghost-prevention as update_chore, on the reward side."""
+    with pytest.raises(ValueError) as excinfo:
+        await hass.services.async_call(
+            DOMAIN, "update_reward", {"reward_id": "reward_nope", "cost": 5}, blocking=True
+        )
+
+    assert str(excinfo.value) == "Reward reward_nope not found", (
+        f"expected the lookup failure, got {excinfo.value}"
+    )
+
+
+async def test_delete_reward_service_removes_exactly_the_named_reward(
+    hass: HomeAssistant, household: dict[str, Any]
+) -> None:
+    """delete_reward is scoped to its reward id."""
+    coordinator: ChoremanderCoordinator = household["coordinator"]
+    keep = await coordinator.async_add_reward("Screen Time")
+
+    drop = await coordinator.async_add_reward("New Book")
+    await hass.services.async_call(DOMAIN, "delete_reward", {"reward_id": drop.id}, blocking=True)
+
+    remaining = [r.id for r in coordinator.data["rewards"]]
+    assert remaining == [keep.id], f"only the deleted reward should be gone, got {remaining!r}"

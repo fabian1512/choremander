@@ -175,6 +175,12 @@ SERVICE_RESET_DAILY: Final = "reset_daily"
 SERVICE_SET_CHORE_ORDER: Final = "set_chore_order"
 SERVICE_SET_CHORE_SCHEDULE: Final = "set_chore_schedule"
 SERVICE_PREVIEW_SOUND: Final = "preview_sound"
+SERVICE_ADD_CHORE: Final = "add_chore"
+SERVICE_UPDATE_CHORE: Final = "update_chore"
+SERVICE_DELETE_CHORE: Final = "delete_chore"
+SERVICE_ADD_REWARD: Final = "add_reward"
+SERVICE_UPDATE_REWARD: Final = "update_reward"
+SERVICE_DELETE_REWARD: Final = "delete_reward"
 
 # Events
 EVENT_PREVIEW_SOUND: Final = "choremander_preview_sound"
@@ -198,6 +204,23 @@ ATTR_ROTATION_ORDER: Final = "rotation_order"
 ATTR_ROTATION_ANCHOR: Final = "rotation_anchor"
 ATTR_DAY_OVERRIDES: Final = "day_overrides"
 ATTR_DATE_OVERRIDES: Final = "date_overrides"
+
+# The CRUD service field names. They mirror the Chore and Reward model fields
+# one to one, so a service payload maps onto the stored row without a second
+# vocabulary to keep in step.
+ATTR_NAME: Final = "name"
+ATTR_DESCRIPTION: Final = "description"
+ATTR_ICON: Final = "icon"
+ATTR_COST: Final = "cost"
+ATTR_ASSIGNED_TO: Final = "assigned_to"
+ATTR_IS_JACKPOT: Final = "is_jackpot"
+ATTR_OVERRIDE_POINT_VALUE: Final = "override_point_value"
+ATTR_DAYS_TO_GOAL: Final = "days_to_goal"
+ATTR_DAILY_LIMIT: Final = "daily_limit"
+ATTR_COMPLETION_PERCENTAGE_PER_MONTH: Final = "completion_percentage_per_month"
+ATTR_REQUIRES_APPROVAL: Final = "requires_approval"
+ATTR_TIME_CATEGORY: Final = "time_category"
+ATTR_COMPLETION_SOUND: Final = "completion_sound"
 
 # States
 STATE_PENDING: Final = "pending"

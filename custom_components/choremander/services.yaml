@@ -204,3 +204,368 @@ set_chore_schedule:
       required: false
       selector:
         object:
+
+add_chore:
+  name: Add Chore
+  description: >-
+    Create a new chore. Only the name is required; every other field falls
+    back to its default. Schedule fields (due days, rotation and overrides)
+    are written through the same code path as set_chore_schedule.
+  fields:
+    name:
+      name: Name
+      description: The name of the chore to create
+      required: true
+      selector:
+        text:
+    points:
+      name: Points
+      description: Points awarded on approval (default 10)
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 10000
+          mode: box
+    description:
+      name: Description
+      description: Optional description shown on the card
+      required: false
+      selector:
+        text:
+    assigned_to:
+      name: Assigned To
+      description: Child IDs the chore is assigned to, for example ["child_maya"]
+      required: false
+      selector:
+        object:
+    requires_approval:
+      name: Requires Approval
+      description: >-
+        Whether a parent must approve each completion before points are
+        awarded (default true)
+      required: false
+      selector:
+        boolean:
+    time_category:
+      name: Time Category
+      description: >-
+        When the chore belongs in the day - morning, afternoon, evening,
+        night or anytime (default anytime)
+      required: false
+      selector:
+        text:
+    daily_limit:
+      name: Daily Limit
+      description: How many times per day the chore can be completed (default 1)
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 100
+          mode: box
+    completion_sound:
+      name: Completion Sound
+      description: Sound played on completion (default coin)
+      required: false
+      selector:
+        text:
+    completion_percentage_per_month:
+      name: Completion % Per Month
+      description: >-
+        Of the days the chore is due, how often it is expected to get done,
+        100 meaning every time (default 100)
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+    due_days:
+      name: Due Days
+      description: >-
+        Lowercase weekday names the chore falls on, for example
+        ["monday", "friday"]. An empty list means every day.
+      required: false
+      selector:
+        object:
+    rotation:
+      name: Rotation
+      description: >-
+        "none" for no rotation, "occurrence" to take turns each time the chore
+        comes round, or "week" to give a whole week to one child at a time.
+      required: false
+      selector:
+        select:
+          options:
+            - none
+            - occurrence
+            - week
+    rotation_order:
+      name: Rotation Order
+      description: >-
+        Child IDs, in the order they take turns. Empty falls back to the
+        children the chore is assigned to.
+      required: false
+      selector:
+        object:
+    rotation_anchor:
+      name: Rotation Anchor
+      description: >-
+        ISO date the rotation counts from, for example "2026-08-03". Change it
+        to shift whose turn it is without reordering the children.
+      required: false
+      selector:
+        text:
+    day_overrides:
+      name: Day Overrides
+      description: >-
+        Permanent per-weekday exceptions, as weekday name to child IDs - for
+        example {"saturday": ["child_maya"]}. An empty list means nobody that
+        day.
+      required: false
+      selector:
+        object:
+    date_overrides:
+      name: Date Overrides
+      description: >-
+        One-off exceptions for a single date, as ISO date to child IDs - for
+        example {"2026-08-08": ["child_krishna"]}. These win over every other
+        rule, and entries more than 60 days old are dropped on save.
+      required: false
+      selector:
+        object:
+
+update_chore:
+  name: Update Chore
+  description: >-
+    Change the properties of an existing chore. Only the fields you pass are
+    changed; everything else, including the schedule, is left alone. Renaming
+    is done through the name field.
+  fields:
+    chore_id:
+      name: Chore ID
+      description: The ID of the chore to update
+      required: true
+      selector:
+        text:
+    name:
+      name: Name
+      description: New name for the chore
+      required: false
+      selector:
+        text:
+    description:
+      name: Description
+      description: New description for the chore
+      required: false
+      selector:
+        text:
+    points:
+      name: Points
+      description: New points value
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 10000
+          mode: box
+    assigned_to:
+      name: Assigned To
+      description: New list of child IDs the chore is assigned to
+      required: false
+      selector:
+        object:
+    requires_approval:
+      name: Requires Approval
+      description: New approval requirement
+      required: false
+      selector:
+        boolean:
+    time_category:
+      name: Time Category
+      description: New time of day - morning, afternoon, evening, night or anytime
+      required: false
+      selector:
+        text:
+    daily_limit:
+      name: Daily Limit
+      description: New daily completion limit
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 100
+          mode: box
+    completion_sound:
+      name: Completion Sound
+      description: New completion sound
+      required: false
+      selector:
+        text:
+    completion_percentage_per_month:
+      name: Completion % Per Month
+      description: New expected completion rate, 100 meaning every time
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+
+delete_chore:
+  name: Delete Chore
+  description: Delete an existing chore. Completed history is kept.
+  fields:
+    chore_id:
+      name: Chore ID
+      description: The ID of the chore to delete
+      required: true
+      selector:
+        text:
+
+add_reward:
+  name: Add Reward
+  description: >-
+    Create a new reward. Only the name is required; every other field falls
+    back to its default.
+  fields:
+    name:
+      name: Name
+      description: The name of the reward to create
+      required: true
+      selector:
+        text:
+    cost:
+      name: Cost
+      description: >-
+        Points cost of the reward. With override_point_value off this is only
+        a fallback (default 50)
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 100000
+          mode: box
+    description:
+      name: Description
+      description: Optional description shown on the card
+      required: false
+      selector:
+        text:
+    icon:
+      name: Icon
+      description: Material icon for the reward (default mdi:gift)
+      required: false
+      selector:
+        text:
+    assigned_to:
+      name: Assigned To
+      description: >-
+        Child IDs the reward is available to, for example ["child_maya"].
+        An empty list means every child.
+      required: false
+      selector:
+        object:
+    is_jackpot:
+      name: Is Jackpot
+      description: Pool the stars of all assigned children together (default false)
+      required: false
+      selector:
+        boolean:
+    override_point_value:
+      name: Override Point Value
+      description: >-
+        Use the manual cost instead of the dynamically calculated price
+        (default false)
+      required: false
+      selector:
+        boolean:
+    days_to_goal:
+      name: Days to Goal
+      description: Number of days the children have to reach the reward (default 30)
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 365
+          mode: box
+
+update_reward:
+  name: Update Reward
+  description: >-
+    Change the properties of an existing reward. Only the fields you pass are
+    changed; everything else is left alone. Renaming is done through the name
+    field.
+  fields:
+    reward_id:
+      name: Reward ID
+      description: The ID of the reward to update
+      required: true
+      selector:
+        text:
+    name:
+      name: Name
+      description: New name for the reward
+      required: false
+      selector:
+        text:
+    description:
+      name: Description
+      description: New description for the reward
+      required: false
+      selector:
+        text:
+    cost:
+      name: Cost
+      description: New points cost
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 100000
+          mode: box
+    icon:
+      name: Icon
+      description: New material icon for the reward
+      required: false
+      selector:
+        text:
+    assigned_to:
+      name: Assigned To
+      description: New list of child IDs the reward is available to
+      required: false
+      selector:
+        object:
+    is_jackpot:
+      name: Is Jackpot
+      description: New jackpot setting
+      required: false
+      selector:
+        boolean:
+    override_point_value:
+      name: Override Point Value
+      description: New override setting
+      required: false
+      selector:
+        boolean:
+    days_to_goal:
+      name: Days to Goal
+      description: New number of days to reach the reward
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 365
+          mode: box
+
+delete_reward:
+  name: Delete Reward
+  description: Delete an existing reward. Approved claims are kept as history.
+  fields:
+    reward_id:
+      name: Reward ID
+      description: The ID of the reward to delete
+      required: true
+      selector:
+        text:
